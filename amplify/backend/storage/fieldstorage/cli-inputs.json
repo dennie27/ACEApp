@@ -1,0 +1,18 @@
+{
+  "resourceName": "fieldstorage",
+  "policyUUID": "2511246d",
+  "bucketName": "agents-with-low-welcome-calls",
+  "storageAccess": "authAndGuest",
+  "guestAccess": [
+    "CREATE_AND_UPDATE",
+    "READ",
+    "DELETE"
+  ],
+  "authAccess": [
+    "CREATE_AND_UPDATE",
+    "READ",
+    "DELETE"
+  ],
+  "triggerFunction": "NONE",
+  "groupAccess": {}
+}

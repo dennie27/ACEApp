@@ -1,0 +1,18 @@
+{
+  "resourceName": "fieldappdata",
+  "tableName": "fieldappdata",
+  "partitionKey": {
+    "fieldName": "no",
+    "fieldType": "string"
+  },
+  "gsi": [
+    {
+      "name": "user",
+      "partitionKey": {
+        "fieldName": "no",
+        "fieldType": "string"
+      }
+    }
+  ],
+  "triggerFunctions": []
+}

@@ -322,7 +322,6 @@ class CustomerVisitState extends State<CustomerVisit> {
               'date': DateFormat('yyyy-MM-dd kk:mm').format(DateTime.now()),
               'Task Type': 'Visit',
               'image': destination,
-              'Task':'Visit',
               'Location' : newLocation
             }
 

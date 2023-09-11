@@ -11,10 +11,8 @@ class UserDetail{
   Future<void> getUser() async {
     // Get docs from collection reference
     QuerySnapshot<Map<String, dynamic>> querySnapshot = await user.get();
-
     // Get data from docs and convert map to List
     final allData = querySnapshot.size;
-
     print("doc length $allData");
   }
   //get data by user area

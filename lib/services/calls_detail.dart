@@ -19,6 +19,8 @@ class USerCallDetail{
 
   CollectionReference<Map<String, dynamic>> _calling =
   FirebaseFirestore.instance.collection('new_calling');
+  CollectionReference<Map<String, dynamic>> _agent =
+  FirebaseFirestore.instance.collection('agent_restricted');
   CollectionReference<Map<String, dynamic>> feedback =
   FirebaseFirestore.instance.collection('FeedBack');
   //var uid = FirebaseFirestore.instance.collection("Users").where("UID",isEqualTo:currentUser);
@@ -51,6 +53,32 @@ class USerCallDetail{
     where('Area', isEqualTo: await UserDetail().getUserArea()).
     where('Task',isEqualTo: value).
     where('Status', isEqualTo: 'Pending').get();
+    // Get data from docs and convert map to List
+    int allData = querySnapshot.size;
+    return allData;
+  }
+  Future<int> CountRestricted() async {
+    // Get docs from collection reference
+    var querySnapshot = await _agent.
+    where('Current Area', isEqualTo: await UserDetail().getUserArea()).get();
+    // Get data from docs and convert map to List
+    int allData = querySnapshot.size;
+    return allData;
+  }
+  Future<int> CountMoveOut() async {
+    // Get docs from collection reference
+    var querySnapshot = await _agent.
+    where('Current Area', isEqualTo: await UserDetail().getUserArea()).
+    where('Move',isEqualTo: 'Move Out').get();
+    // Get data from docs and convert map to List
+    int allData = querySnapshot.size;
+    return allData;
+  }
+  Future<int> CountMoveIn() async {
+    // Get docs from collection reference
+    var querySnapshot = await _agent.
+    where('Current Area', isEqualTo: await UserDetail().getUserArea()).
+        where('Move',isEqualTo: 'Move In').get();
     // Get data from docs and convert map to List
     int allData = querySnapshot.size;
     return allData;

@@ -79,6 +79,7 @@ class PendingCallsState extends State<PendingCalls> {
         .get();
     setState(() {
       _data = querySnapshot.docs;
+      print(_data);
     });
   }
 
@@ -91,6 +92,7 @@ class PendingCallsState extends State<PendingCalls> {
         .get();
     setState(() {
       _data = querySnapshot.docs;
+      print(_data);
       visit = false;
     });
   }

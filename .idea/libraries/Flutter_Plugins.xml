@@ -61,6 +61,9 @@
       <root url="file://$PROJECT_DIR$/../AppData/Local/Pub/Cache/hosted/pub.dev/flutter_local_notifications-13.0.0" />
       <root url="file://$PROJECT_DIR$/../AppData/Local/Pub/Cache/hosted/pub.dev/google_sign_in-5.4.4" />
       <root url="file://$PROJECT_DIR$/../AppData/Local/Pub/Cache/hosted/pub.dev/firebase_auth_web-5.4.0" />
+      <root url="file://$PROJECT_DIR$/../AppData/Local/Pub/Cache/hosted/pub.dev/amplify_flutter-1.0.1" />
+      <root url="file://$PROJECT_DIR$/../AppData/Local/Pub/Cache/hosted/pub.dev/amplify_secure_storage-0.3.0+4" />
+      <root url="file://$PROJECT_DIR$/../AppData/Local/Pub/Cache/hosted/pub.dev/amplify_db_common-0.1.2+8" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

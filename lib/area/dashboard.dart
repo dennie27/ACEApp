@@ -56,105 +56,179 @@ class AreaDashboardState extends State<AreaDashboard> {
         ],
       )
       ,
-    ):DefaultTabController(
-      length: 2,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          KpiTittle(
-            kpicolor: AppColor.mycolor,
-            label: 'Calls Summary',
-            txtcolor: Colors.black87,
-          ),
-          Row(
-            children: [
-              RowData(
-                value: 0,
-                label: 'Call Attempt',
-                future: USerCallDetail().CountComplete('Call'),
-              ),
-              RowData(
-                value: 0,
-                label: 'Call Made',
-                future: USerCallDetail().CountCallMade('Call'),
-              ),
-              RowData(
-                label: 'Calls Pending',
-                value: 0,
-                future: USerCallDetail().CountPendingCall('Call'),
-              ),
+    ):SingleChildScrollView(
+      child: DefaultTabController(
+        length: 2,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            KpiTittle(
+              kpicolor: AppColor.mycolor,
+              label: 'Calls Summary',
+              txtcolor: Colors.black87,
+            ),
+            Row(
+              children: [
+                RowData(
+                  value: 0,
+                  label: 'Call Attempt',
+                  future: USerCallDetail().CountComplete('Call'),
+                ),
+                RowData(
+                  value: 0,
+                  label: 'Call Made',
+                  future: USerCallDetail().CountCallMade('Call'),
+                ),
+                RowData(
+                  label: 'Calls Pending',
+                  value: 0,
+                  future: USerCallDetail().CountPendingCall('Call'),
+                ),
 
 
-            ],
-          ),
-          Row(
-            children: [
-              RowData(
-                value: 0,
-                label: 'Complete Rate',
-                future: USerCallDetail().CompleteCallRate('Call'),
-              ),
-              RowData(
-                value: 32,
-                label: 'Success Calls',
-                future: USerCallDetail().CountSucceful('Call'),
-              ),
-              RowData(
-                value: 35,
-                label: 'Total Collected',
-                future: USerCallDetail().Amount('Call'),
-              ),
-            ],
-          ),
-          KpiTittle(
-            kpicolor: AppColor.mycolor,
-            label: 'Visit Summary',
-            txtcolor: Colors.black87,
-          ),
-          Row(
-            children: [
-              RowData(
-                value: 20,
-                label: 'Visit Attempt',
-                future: USerCallDetail().CountComplete('Visit'),
-              ),
-              RowData(
-                value: 20,
-                label: 'Visit Made',
-                future: USerCallDetail().CountVisitMade('Visit'),
-              ),
-              RowData(
-                value: 40,
-                label: 'Visit Pending',
-                future: USerCallDetail().CountPendingVisit('Visit'),
-              ),
-            ],
-          ),
-          Row(
-            children: [
+              ],
+            ),
+            Row(
+              children: [
+                RowData(
+                  value: 0,
+                  label: 'Complete Rate',
+                  future: USerCallDetail().CompleteCallRate('Call'),
+                ),
+                RowData(
+                  value: 32,
+                  label: 'Success Calls',
+                  future: USerCallDetail().CountSucceful('Call'),
+                ),
+                RowData(
+                  value: 35,
+                  label: 'Total Collected',
+                  future: USerCallDetail().Amount('Call'),
+                ),
+              ],
+            ),
+            KpiTittle(
+              kpicolor: AppColor.mycolor,
+              label: 'Visit Summary',
+              txtcolor: Colors.black87,
+            ),
+            Row(
+              children: [
+                RowData(
+                  value: 20,
+                  label: 'Visit Attempt',
+                  future: USerCallDetail().CountComplete('Visit'),
+                ),
+                RowData(
+                  value: 20,
+                  label: 'Visit Made',
+                  future: USerCallDetail().CountVisitMade('Visit'),
+                ),
+                RowData(
+                  value: 40,
+                  label: 'Visit Pending',
+                  future: USerCallDetail().CountPendingVisit('Visit'),
+                ),
+              ],
+            ),
+            Row(
+              children: [
 
-              RowData(
-                value: 35,
-                label: 'Complete Rate',
-                future: USerCallDetail().CompleteVistRate('Visit'),
-              ),
+                RowData(
+                  value: 35,
+                  label: 'Complete Rate',
+                  future: USerCallDetail().CompleteVistRate('Visit'),
+                ),
 
-              RowData(
-                value: 20,
-                label: 'Success Visit',
-                future: USerCallDetail().CountSucceful('Visit'),
-              ),
-              RowData(
-                value: 35,
-                label: 'Total Collected',
-                future: USerCallDetail().Amount('Visit'),
-              ),
-            ],
-          ),
-          SizedBox(
-            height: 15,
-          ),
-        ],
+                RowData(
+                  value: 20,
+                  label: 'Success Visit',
+                  future: USerCallDetail().CountSucceful('Visit'),
+                ),
+                RowData(
+                  value: 35,
+                  label: 'Total Collected',
+                  future: USerCallDetail().Amount('Visit'),
+                ),
+              ],
+            ),
+            KpiTittle(
+              kpicolor: AppColor.mycolor,
+              label: 'Disable Task  Summary',
+              txtcolor: Colors.black87,
+            ),
+            Row(
+              children: [
+                RowData(
+                  value: 0,
+                  label: 'Task Attempt',
+                  future: USerCallDetail().CountComplete('Disable'),
+                ),
+                RowData(
+                  value: 0,
+                  label: 'Task Made',
+                  future: USerCallDetail().CountCallMade('Disable'),
+                ),
+                RowData(
+                  label: 'Task Pending',
+                  value: 0,
+                  future: USerCallDetail().CountPendingCall('Disable'),
+                ),
+
+
+              ],
+            ),
+            Row(
+              children: [
+                RowData(
+                  value: 0,
+                  label: 'Complete Rate',
+                  future: USerCallDetail().CompleteCallRate('Disable'),
+                ),
+                RowData(
+                  value: 32,
+                  label: 'Success Calls',
+                  future: USerCallDetail().CountSucceful('Disable'),
+                ),
+                RowData(
+                  value: 35,
+                  label: 'Total Collected',
+                  future: USerCallDetail().Amount('Disable'),
+                ),
+              ],
+            ),
+            KpiTittle(
+              kpicolor: AppColor.mycolor,
+              label: 'Restricted Agents',
+              txtcolor: Colors.black87,
+            ),
+            Row(
+              children: [
+                RowData(
+                  value: 0,
+                  label: 'Agent Restricted',
+                  future: USerCallDetail().CountRestricted(),
+                ),
+                RowData(
+                  value: 0,
+                  label: 'Agent Moved out',
+                  future: USerCallDetail().CountMoveOut(),
+                ),
+                RowData(
+                  label: 'Agent Move In',
+                  value: 0,
+                  future: USerCallDetail().CountMoveIn(),
+                ),
+
+
+              ],
+            ),
+
+            SizedBox(
+              height: 15,
+            ),
+          ],
+        ),
       ),
     );
   }

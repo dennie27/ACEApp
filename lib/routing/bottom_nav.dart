@@ -13,6 +13,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart'as http;
 import '../area/acl_task.dart';
+import '../area/restricted_agent.dart';
 import 'appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
@@ -123,6 +124,7 @@ class NavPagePageState extends State<NavPage> {
 
     AreaDashboard(),
     Customer(),
+    RestrictedTask()
   ];
   @override
   Widget build(BuildContext context) {
@@ -161,12 +163,16 @@ class NavPagePageState extends State<NavPage> {
                   text: 'Home',
                 ),*/
                 GButton(
-                  icon: Icons.task,
-                  text: 'task',
+                  icon: Icons.home,
+                  text: 'Dashboard',
                 ),
                   GButton(
                   icon: Icons.phone,
-                  text: 'Customer',
+                  text: 'Task',
+                ),
+                GButton(
+                  icon: Icons.people,
+                  text: 'Agent',
                 ),
               ],
               onTabChange: (index){

@@ -1,14 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart'as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 class UserDetail{
-  var currentUser = FirebaseAuth.instance.currentUser!.uid;
+
   var user = FirebaseFirestore.instance.collection('Users');
   //to get number of calls
 
   Future<void> getUser() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var currentUser = prefs.getString("name");
     // Get docs from collection reference
     QuerySnapshot<Map<String, dynamic>> querySnapshot = await user.get();
     // Get data from docs and convert map to List
@@ -24,27 +27,26 @@ class UserDetail{
 
   }
   getUserArea() async{
-    var  query = await user.where("UID", isEqualTo: currentUser).get();
-    var snapshot = query.docs[0];
-    var data = snapshot.data();
-    return data['Area'];
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var area = prefs.getString("area");
+
+    return area;
 
   }
   getUserRegion() async{
-    var  query = await user.where("UID", isEqualTo: currentUser).get();
-    var snapshot = query.docs[0];
-    var data = snapshot.data();
-    return data['Region'];
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var region = prefs.getString("region");
+    return region;
   }
   getUSeRole()async{
-    var  query = await user.where("UID", isEqualTo: currentUser).get();
-    var snapshot = query.docs[0];
-    var data = snapshot.data();
-    return data['Role'];
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var role = prefs.getString("role");
+
+    return role;
   }
   getUserRegionSnap() async{
-    QuerySnapshot<Object?>  query = await user.where("UID", isEqualTo: currentUser).get();
-
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var query = prefs.getString("region");
     return query;
   }
 

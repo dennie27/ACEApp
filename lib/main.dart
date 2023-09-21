@@ -1,10 +1,17 @@
+import 'dart:convert';
+
+import 'package:amplify_flutter/amplify_flutter.dart';
+import 'package:amplify_storage_s3/amplify_storage_s3.dart';
 import 'package:field_app/services/db.dart';
 import 'package:field_app/utils/themes/theme.dart';
+import 'package:field_app/widget/drop_down.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'amplifyconfiguration.dart';
 import 'routing/bottom_nav.dart';
+import 'package:http/http.dart' as http;
 import 'login.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,6 +26,22 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
+Future<void> _configureAmplify() async {
+  try {
+    final storage = AmplifyStorageS3();
+
+
+
+    await Amplify.addPlugins([
+      storage,
+    ]);
+
+    await Amplify.configure(amplifyconfig);
+  } on Exception catch (e) {
+    safePrint('Error configuring Amplify: $e');
+  }
+}
+
 
 
 class MyApp extends StatefulWidget {
@@ -28,22 +51,26 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
-  User? user;
   bool isLogin = false;
+  void getUserAuth() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool? auth = prefs.getBool('isLogin');
+    setState(() {
+      if(auth != null){
+        isLogin = auth!;
+      }
+
+    });
+
+  }
+
   late FirebaseMessaging messaging;
   @override
 
 
   void initState() {
     super.initState();
-    user = _auth.currentUser;
-    if (user != null) {
-      isLogin = true;
-    } else {
-      isLogin = false;
-    }
+    getUserAuth();
 
   }
 
@@ -54,7 +81,7 @@ class _MyAppState extends State<MyApp> {
       /*darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,*/
       debugShowCheckedModeBanner: false,
-      home: /*CustomerScreen()*/ isLogin ? NavPage() : Login(),
+      home: /*CustomerScreen()*/ isLogin ? NavPage() : LoginSignupPage(),
     );
   }
 }
@@ -76,24 +103,61 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
   String country ='';
   String firstname ='';
   String lastname ='';
+  bool isLoading = true;
+  List? data = [];
+  List<String> countrydata = [];
   AuthMode _authMode = AuthMode.Login;
+  Future<void> CoutryData(key) async {
+    List<String> uniqueCountry = [];
+    print("object: $key");
 
+    try {
+
+      StorageGetUrlResult urlResult = await Amplify.Storage.getUrl(
+          key: key)
+          .result;
+
+      final response = await http.get(urlResult.url);
+      final jsonData = jsonDecode(response.body);
+      print('File_team: $jsonData');
+
+      print(jsonData.length);
+
+      for (var item in jsonData) {
+        uniqueCountry.add(item['Region']);
+
+      }
+      setState(() {
+        countrydata = uniqueCountry.toSet().toList();
+        data = jsonData;
+        isLoading = false;
+
+      });
+    } on StorageException catch (e) {
+      safePrint('Could not retrieve properties: ${e.message}');
+      rethrow;
+    }
+  }
   Future<void> _submitForm() async {
     print(_authMode);
     if (_formKey.currentState!.validate()) {
       var connection = await Database.connect();
       if(_authMode == AuthMode.Login){
-        var results = await connection.query( "SELECT * FROM fieldappusers_feildappuser WHERE email = @email AND password = @password",
-          substitutionValues: {"email":_email,"password": _password},);
+        final response = await http.post(
+          Uri.parse('https://sun-kingfieldapp.herokuapp.com/api/auth/signin'), // Replace with your API endpoint URL.
+          body: {
+            'email': _email,
+            'pass1': _password,
+          },
+        );
         SharedPreferences prefs = await SharedPreferences.getInstance();
-
-
-
-        if (results.isNotEmpty) {
-          print(results);
+        print(response.statusCode);
+        if (response.statusCode== 200) {
+          var results = await connection.query( "SELECT * FROM fieldappusers_feildappuser WHERE email = @email",
+            substitutionValues: {"email":_email});
           var Row = results[0];
           prefs.setString('email', Row[4]);
-          prefs.setString('name', Row[6]);
+          prefs.setString('name', Row[6] + ' ' + Row[7]);
           prefs.setString('country', Row[8]);
           prefs.setString('zone', Row[10]);
           prefs.setString('region', Row[9]);
@@ -104,15 +168,56 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
           print(prefs.get('name'));
           Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => NavPage()));
         }else{
+          final Map<String, dynamic> responseData = jsonDecode(response.body);
+          String successMessage = responseData['error'];
           final snackBar = SnackBar(
-            content: Text('Incorrect credentials please try again'),
+            content: Text(successMessage),
             duration: Duration(seconds: 3),
           );
           ScaffoldMessenger.of(context).showSnackBar(snackBar);
         }
       }else {
         try{
-          await  connection.execute("insert into fieldappusers_feildappuser (username,email,password, first_name,last_name,country,zone,region,area,role,is_superuser,is_staff,is_active) values ('$_email','$_email','$_password','$firstname','$lastname','$country','$zone','$region','$zone','$role','false','true','true')   ");
+          final response = await http.post(
+            Uri.parse('https://sun-kingfieldapp.herokuapp.com/api/auth/signup'),
+            body: {
+              'username' : _email,
+              'fname' :firstname ,
+              'lname' : lastname,
+              'email' : _email,
+              'country' :country,
+              'zone' : zone,
+              'region' :region ,
+              'area' : area,
+              'role' : role,
+              'pass1' : _password,
+              'pass2' : _confirmPassword,
+
+          },
+          );
+          if(response.statusCode == 201){
+            final Map<String, dynamic> responseData = jsonDecode(response.body);
+            String successMessage = responseData['message'];
+            final snackBar = SnackBar(
+
+              content: Text(successMessage),
+              duration: Duration(seconds: 3),
+            );
+            ScaffoldMessenger.of(context).showSnackBar(snackBar);
+            setState(() {
+              _authMode = AuthMode.Login;
+            });
+          }else{
+            print(response.body);
+            final Map<String, dynamic> responseData = jsonDecode(response.body);
+            String successMessage = responseData['error'];
+            final snackBar = SnackBar(
+              content: Text(successMessage),
+              duration: Duration(seconds: 3),
+            );
+            ScaffoldMessenger.of(context).showSnackBar(snackBar);
+            print(successMessage);
+          }
         }catch (e) {
           print('Error executing query: $e');
         } finally {
@@ -121,14 +226,20 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
       }
     }
   }
+@override
+  void initState() {
 
+    // TODO: implement initState
+    super.initState();
+    CoutryData("country");
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
 
       body: SingleChildScrollView(
         child: Container(
-          padding: EdgeInsets.fromLTRB(10,100.0,0,0),
+          padding: EdgeInsets.fromLTRB(10,100.0,10,0),
           child: Form(
             key: _formKey,
             child: Column(
@@ -148,6 +259,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
                         firstname = value;
                       },
                     ),
+                    SizedBox(height: 10,),
                     TextFormField(
                       decoration: InputDecoration(labelText: 'Last Name'),
                       validator: (value) {
@@ -160,55 +272,85 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
                         lastname = value;
                       },
                     ),
-                    TextFormField(
-                      decoration: InputDecoration(labelText: 'Country'),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your Country';
-                        }
-                        return null;
-                      },
-                      onChanged: (value) {
-                        country = value;
-                      },
-                    ),
-                    TextFormField(
-                      decoration: InputDecoration(labelText: 'Zone'),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your Zone';
-                        }
-                        return null;
-                      },
-                      onChanged: (value) {
-                        zone = value;
-                      },
-                    ),
-                    TextFormField(
-                      decoration: InputDecoration(labelText: 'Region'),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your Region';
-                        }
-                        return null;
-                      },
-                      onChanged: (value) {
-                        region = value;
-                      },
-                    ),
-                    TextFormField(
-                      decoration: InputDecoration(labelText: 'Role'),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your Role';
-                        }
-                        return null;
-                      },
-                      onChanged: (value) {
-                        role = value;
-                      },
-                    ),
+                    SizedBox(height: 10,),
+                    AppDropDown(
+                        disable: false,
+                        label: "Country",
+                        hint: "Country",
+                        items: countrydata,
+                        validator: (value){
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your Country';
+                          }
+                          return null;
+                        },
+                        onChanged: (value){
+                          country = value;
+                        }),
+                    SizedBox(height: 10,),
+                    AppDropDown(
+                        disable: false,
+                        label: "Zone",
+                        hint: "Zone",
+                        items: ["West"],
+                        validator: (value){
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your Zone';
+                          }
+                          return null;
+                        },
+                        onChanged: (value){
+                          zone = value;
+                        }),
+                    SizedBox(height: 10,),
+
+                    AppDropDown(
+                        disable: false,
+                        label: "Region",
+                        hint: "Region",
+                        items: ["Central"],
+                        validator: (value){
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your Zone';
+                          }
+                          return null;
+                        },
+                        onChanged: (value){
+                          region = value;
+                        }),
+                    SizedBox(height: 10,),
+                    AppDropDown(
+                        disable: false,
+                        label: "Area",
+                        hint: "Area",
+                        items: ["Singida"],
+                        validator: (value){
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your Area';
+                          }
+                          return null;
+                        },
+                        onChanged: (value){
+                          area = value;
+                        }),
+                    SizedBox(height: 10,),
+                    AppDropDown(
+                        disable: false,
+                        label: "Role",
+                        hint: "Role",
+                        items: const ["Area Collection Executive"],
+                        validator: (value){
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your Role';
+                          }
+                          return null;
+                        },
+                        onChanged: (value){
+                          role = value;
+                        }),
+
                   ],),
+                SizedBox(height: 10,),
                 TextFormField(
                   decoration: InputDecoration(labelText: 'Email'),
                   validator: (value) {

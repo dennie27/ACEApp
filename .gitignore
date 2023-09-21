@@ -65,6 +65,10 @@ node_modules/
 # dotenv environment variables file
 .env
 
+
+# Project exclude paths
+/.dart_tool/
+
 #amplify-do-not-edit-begin
 amplify/\#current-cloud-backend
 amplify/.config/local-*
@@ -86,6 +90,3 @@ amplifytools.xcconfig
 .secret-*
 **.sample
 #amplify-do-not-edit-end
-
-# Project exclude paths
-/.dart_tool/

@@ -1,13 +1,9 @@
 import 'dart:core';
-import 'package:field_app/area/pending_calls.dart';
 import 'package:field_app/services/calls_detail.dart';
 import 'package:field_app/utils/themes/theme.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-
 import '../services/user_detail.dart';
-import 'complete_calls.dart';
 
 class AreaDashboard extends StatefulWidget {
   const AreaDashboard({Key? key}) : super(key: key);

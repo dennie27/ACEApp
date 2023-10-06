@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:amplify_storage_s3/amplify_storage_s3.dart';
 import 'package:field_app/services/db.dart';
@@ -9,6 +9,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:workmanager/workmanager.dart';
 import 'amplifyconfiguration.dart';
 import 'routing/bottom_nav.dart';
 import 'package:http/http.dart' as http;
@@ -20,20 +22,85 @@ Future<void> backgroundHandler(RemoteMessage message) async {
   print("Handling a background message: ${message.messageId}");
 
 }
+void callbackDispatcher() {
+  Future<void> ACETask(key) async {
+    try {
+
+      StorageGetUrlResult urlResult = await Amplify.Storage.getUrl(
+          key: key)
+          .result;
+      final response = await http.get(urlResult.url);
+      print(response.body);
+      final jsonData = jsonDecode(response.body);
+      print('File Data: $jsonData');
+      final List<dynamic> filteredTasks = jsonData;
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final String filteredTasksJson = jsonEncode(filteredTasks);
+      await prefs.setString('filteredTasks', filteredTasksJson);
+      print(filteredTasksJson);
+
+      print(filteredTasks.length);
+    } on StorageException catch (e) {
+      safePrint('Could not retrieve properties: ${e.message}');
+      rethrow;
+    }
+  }
+  Future<StorageItem?> listItems() async {
+    var key = "ACE_Data";
+    try {
+      StorageListOperation<StorageListRequest, StorageListResult<StorageItem>>
+      operation = await Amplify.Storage.list(
+        options: const StorageListOptions(
+          accessLevel: StorageAccessLevel.guest,
+          pluginOptions: S3ListPluginOptions.listAll(),
+
+        ),
+      );
+
+      Future<StorageListResult<StorageItem>> result = operation.result;
+      List<StorageItem> resultList = (await operation.result).items;
+      resultList = resultList.where((file) => file.key.contains(key)).toList();
+      if (resultList.isNotEmpty) {
+        // Sort the files by the last modified timestamp in descending order
+        resultList.sort((a, b) => b.lastModified!.compareTo(a.lastModified!));
+        StorageItem latestFile = resultList.first;
+        ACETask(latestFile.key);
+        print(latestFile.key);
+        return resultList.first;
+      } else {
+        print('No files found in the S3 bucket with key containing "$key".');
+        return null;
+      }
+    } on StorageException catch (e) {
+      safePrint('Error listing items: $e');
+    }
+  }
+
+
+}
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Workmanager().initialize(callbackDispatcher);
+  await Workmanager().registerPeriodicTask(
+    '1',
+    'simpleTask',
+    frequency:  Duration(days: 1)
+  );
   await Firebase.initializeApp();
+  await _configureAmplify();
   runApp(const MyApp());
 }
 
 Future<void> _configureAmplify() async {
   try {
     final storage = AmplifyStorageS3();
+    final auth = AmplifyAuthCognito();
 
 
 
     await Amplify.addPlugins([
       storage,
+      auth
     ]);
 
     await Amplify.configure(amplifyconfig);
@@ -52,9 +119,12 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   bool isLogin = false;
+  bool newList =  false;
   void getUserAuth() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool? auth = prefs.getBool('isLogin');
+    bool? newData =prefs.getBool('isNewData');
+    print('New data $newData');
     setState(() {
       if(auth != null){
         isLogin = auth!;
@@ -66,11 +136,113 @@ class _MyAppState extends State<MyApp> {
 
   late FirebaseMessaging messaging;
   @override
+  Future<StorageItem?> listItems(key) async {
+    try {
+      StorageListOperation<StorageListRequest, StorageListResult<StorageItem>>
+      operation = await Amplify.Storage.list(
+        options: const StorageListOptions(
+          accessLevel: StorageAccessLevel.guest,
+          pluginOptions: S3ListPluginOptions.listAll(),
 
+        ),
+      );
 
+      Future<StorageListResult<StorageItem>> result = operation.result;
+      List<StorageItem> resultList = (await operation.result).items;
+      resultList = resultList.where((file) => file.key.contains(key)).toList();
+      if (resultList.isNotEmpty) {
+        // Sort the files by the last modified timestamp in descending order
+        resultList.sort((a, b) => b.lastModified!.compareTo(a.lastModified!));
+        StorageItem latestFile = resultList.first;
+        StorageGetUrlResult urlResult = await Amplify.Storage.getUrl(
+            key: key)
+            .result;
+        print(urlResult.url);
+        ACETask(latestFile.key);
+        print(latestFile.key);
+        return resultList.first;
+      } else {
+        print('No files found in the S3 bucket with key containing "$key".');
+        return null;
+      }
+    } on StorageException catch (e) {
+      safePrint('Error listing items: $e');
+    }
+  }
+  Future<void> ACETask(key) async {
+    try {
+
+      StorageGetUrlResult urlResult = await Amplify.Storage.getUrl(
+          key: key)
+          .result;
+      final response = await http.get(urlResult.url);
+      final jsonData = jsonDecode(response.body);
+      final List<dynamic> filteredTasks = jsonData;
+      print(filteredTasks);
+      print(filteredTasks.length);
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final String filteredTasksJson = jsonEncode(filteredTasks);
+      await prefs.setString('filteredTasks', filteredTasksJson);
+      print(filteredTasksJson);
+    } on StorageException catch (e) {
+      safePrint('Could not retrieve properties: ${e.message}');
+      rethrow;
+    }
+  }
+  bool servicestatus = false;
+  bool haspermission = false;
+  late LocationPermission permission;
+  checkGps() async {
+    servicestatus = await Geolocator.isLocationServiceEnabled();
+    if(servicestatus){
+      permission = await Geolocator.checkPermission();
+
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Location permissions are denied'),
+            ),
+          );
+        }else if(permission == LocationPermission.deniedForever){
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Location permissions are permanently denied'),
+            ),
+          );
+        }else{
+          haspermission = true;
+        }
+      }else{
+        haspermission = true;
+      }
+    }else{
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('GPS Service is not enabled, turn on GPS location'),
+        ),
+      );
+
+    }
+
+    /*setState(() {
+      //refresh the UI
+    });*/
+  }
   void initState() {
+    checkGps();
     super.initState();
+
     getUserAuth();
+    listItems("ACE_Data");
+    if(newList !=null){
+      print("not empty");
+    }else{
+      print("empty");
+
+    }
+
 
   }
 
@@ -107,6 +279,36 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
   List? data = [];
   List<String> countrydata = [];
   AuthMode _authMode = AuthMode.Login;
+  Future<StorageItem?> listItems(key) async {
+    try {
+      StorageListOperation<StorageListRequest, StorageListResult<StorageItem>>
+      operation = await Amplify.Storage.list(
+        options: const StorageListOptions(
+          accessLevel: StorageAccessLevel.guest,
+          pluginOptions: S3ListPluginOptions.listAll(),
+        ),
+      );
+
+      Future<StorageListResult<StorageItem>> result = operation.result;
+      List<StorageItem> resultList = (await operation.result).items;
+      resultList = resultList.where((file) => file.key.contains(key)).toList();
+      if (resultList.isNotEmpty) {
+        // Sort the files by the last modified timestamp in descending order
+        resultList.sort((a, b) => b.lastModified!.compareTo(a.lastModified!));
+        StorageItem latestFile = resultList.first;
+
+        CoutryData(latestFile.key);
+        print(latestFile.key);
+        return resultList.first;
+      } else {
+        print('No files found in the S3 bucket with key containing "$key".');
+        return null;
+      }
+      safePrint('Got items: ${resultList.length}');
+    } on StorageException catch (e) {
+      safePrint('Error listing items: $e');
+    }
+  }
   Future<void> CoutryData(key) async {
     List<String> uniqueCountry = [];
     print("object: $key");
@@ -118,6 +320,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
           .result;
 
       final response = await http.get(urlResult.url);
+      print(response.body);
       final jsonData = jsonDecode(response.body);
       print('File_team: $jsonData');
 
@@ -227,11 +430,13 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
     }
   }
 @override
-  void initState() {
+  void initState()  {
 
     // TODO: implement initState
     super.initState();
-    CoutryData("country");
+      //listItems("country");
+
+
   }
   @override
   Widget build(BuildContext context) {

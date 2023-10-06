@@ -64,6 +64,10 @@
       <root url="file://$PROJECT_DIR$/../AppData/Local/Pub/Cache/hosted/pub.dev/amplify_flutter-1.0.1" />
       <root url="file://$PROJECT_DIR$/../AppData/Local/Pub/Cache/hosted/pub.dev/amplify_secure_storage-0.3.0+4" />
       <root url="file://$PROJECT_DIR$/../AppData/Local/Pub/Cache/hosted/pub.dev/amplify_db_common-0.1.2+8" />
+      <root url="file://$PROJECT_DIR$/../AppData/Local/Pub/Cache/hosted/pub.dev/package_info_plus-3.1.2" />
+      <root url="file://$PROJECT_DIR$/../AppData/Local/Pub/Cache/hosted/pub.dev/amplify_analytics_pinpoint-1.0.1" />
+      <root url="file://$PROJECT_DIR$/../AppData/Local/Pub/Cache/hosted/pub.dev/device_info_plus-8.2.2" />
+      <root url="file://$PROJECT_DIR$/../AppData/Local/Pub/Cache/hosted/pub.dev/amplify_auth_cognito-1.0.1" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

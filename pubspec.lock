@@ -17,6 +17,54 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.0"
+  amplify_analytics_pinpoint:
+    dependency: transitive
+    description:
+      name: amplify_analytics_pinpoint
+      sha256: "1bbbd2071903638b4bc8d489e560466f476d4caa67e552956529a2607672ead6"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.1"
+  amplify_analytics_pinpoint_dart:
+    dependency: transitive
+    description:
+      name: amplify_analytics_pinpoint_dart
+      sha256: "9fb2bf350df348724ce2fab64a2c88f668bd80e2b193fbeddfe150930a798869"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0+3"
+  amplify_auth_cognito:
+    dependency: "direct main"
+    description:
+      name: amplify_auth_cognito
+      sha256: "2ba9a7ccd2964999e1ceb9b962ae753a5fc24c3fd95169b4c68d189da256c525"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.1"
+  amplify_auth_cognito_android:
+    dependency: transitive
+    description:
+      name: amplify_auth_cognito_android
+      sha256: b9170bf5d990cb91a68ec0a86606bdcecff027ccfb08202b4e074f2a6f8d3712
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.1"
+  amplify_auth_cognito_dart:
+    dependency: transitive
+    description:
+      name: amplify_auth_cognito_dart
+      sha256: b7b0748cb6cfb1050e0aabdc85da71814b6c5f4b7bf516c2f20aa843466b7e0b
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.9.0+3"
+  amplify_auth_cognito_ios:
+    dependency: transitive
+    description:
+      name: amplify_auth_cognito_ios
+      sha256: "4c7d485f2301e0684aaa8f027b481e824da051f8c40cb4094f0b4dfe9fde63ab"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.1"
   amplify_core:
     dependency: transitive
     description:
@@ -345,6 +393,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.0"
+  device_info_plus:
+    dependency: transitive
+    description:
+      name: device_info_plus
+      sha256: f52ab3b76b36ede4d135aab80194df8925b553686f0fa12226b4e2d658e45903
+      url: "https://pub.dev"
+    source: hosted
+    version: "8.2.2"
+  device_info_plus_platform_interface:
+    dependency: transitive
+    description:
+      name: device_info_plus_platform_interface
+      sha256: d3b01d5868b50ae571cd1dc6e502fc94d956b665756180f7b16ead09e836fd64
+      url: "https://pub.dev"
+    source: hosted
+    version: "7.0.0"
   dio:
     dependency: transitive
     description:
@@ -1032,6 +1096,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.0"
+  oauth2:
+    dependency: transitive
+    description:
+      name: oauth2
+      sha256: c4013ef62be37744efdc0861878fd9e9285f34db1f9e331cc34100d7674feb42
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.2"
   os_detect:
     dependency: transitive
     description:
@@ -1048,6 +1120,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.0"
+  package_info_plus:
+    dependency: transitive
+    description:
+      name: package_info_plus
+      sha256: "10259b111176fba5c505b102e3a5b022b51dd97e30522e906d6922c745584745"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.1.2"
+  package_info_plus_platform_interface:
+    dependency: transitive
+    description:
+      name: package_info_plus_platform_interface
+      sha256: "9bc8ba46813a4cc42c66ab781470711781940780fd8beddd0c3da62506d3a6c6"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.1"
   path:
     dependency: transitive
     description:

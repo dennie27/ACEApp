@@ -1,4 +1,8 @@
 # This is a generated file; do not edit or check into version control.
+amplify_analytics_pinpoint=C:\\Users\\User\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\amplify_analytics_pinpoint-1.0.1\\
+amplify_auth_cognito=C:\\Users\\User\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\amplify_auth_cognito-1.0.1\\
+amplify_auth_cognito_android=C:\\Users\\User\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\amplify_auth_cognito_android-1.0.1\\
+amplify_auth_cognito_ios=C:\\Users\\User\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\amplify_auth_cognito_ios-1.0.1\\
 amplify_db_common=C:\\Users\\User\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\amplify_db_common-0.1.2+8\\
 amplify_flutter=C:\\Users\\User\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\amplify_flutter-1.0.1\\
 amplify_flutter_android=C:\\Users\\User\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\amplify_flutter_android-1.0.1\\
@@ -11,6 +15,7 @@ camera_avfoundation=C:\\Users\\User\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev
 camera_web=C:\\Users\\User\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\camera_web-0.2.1+6\\
 cloud_firestore=C:\\Users\\User\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\cloud_firestore-4.6.0\\
 cloud_firestore_web=C:\\Users\\User\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\cloud_firestore_web-3.4.3\\
+device_info_plus=C:\\Users\\User\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\device_info_plus-8.2.2\\
 firebase_analytics=C:\\Users\\User\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\firebase_analytics-10.3.0\\
 firebase_analytics_web=C:\\Users\\User\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\firebase_analytics_web-0.5.3\\
 firebase_auth=C:\\Users\\User\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\firebase_auth-4.5.0\\
@@ -46,6 +51,7 @@ image_picker_for_web=C:\\Users\\User\\AppData\\Local\\Pub\\Cache\\hosted\\pub.de
 image_picker_ios=C:\\Users\\User\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\image_picker_ios-0.8.7+3\\
 location=C:\\Users\\User\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\location-4.4.0\\
 location_web=C:\\Users\\User\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\location_web-3.1.1\\
+package_info_plus=C:\\Users\\User\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\package_info_plus-3.1.2\\
 path_provider=C:\\Users\\User\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\path_provider-2.0.14\\
 path_provider_android=C:\\Users\\User\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\path_provider_android-2.0.27\\
 path_provider_foundation=C:\\Users\\User\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\path_provider_foundation-2.2.2\\

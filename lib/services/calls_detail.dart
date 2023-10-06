@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:amplify_flutter/amplify_flutter.dart';
+import 'package:amplify_storage_s3/amplify_storage_s3.dart';
 import 'package:field_app/services/db.dart';
 import 'package:field_app/services/user_detail.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -28,10 +30,9 @@ class USerCallDetail{
 
   Future<void> getData() async {
     // Get docs from collection reference
-    QuerySnapshot<Map<String, dynamic>> querySnapshot = await _calling.get();
+
 
     // Get data from docs and convert map to List
-    final allData = querySnapshot.size;
 
   }
 
@@ -65,25 +66,24 @@ class USerCallDetail{
     return count;
   }
   Future<int> CountPendingCall(String value) async {
-    var area = "Arusha";
-    final connection =   await Database.connect();
+    var connection = await Database.connect();
+    var results = await connection.query("SELECT angaza_id FROM feedback");
+    var uniqueAngazaIds = <String>{};
+    for (var row in results) {
+      uniqueAngazaIds.add(row[0] as String);
+    }
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final data = prefs.getString('filteredTasks') ?? '[]';
+    var dataList = jsonDecode(data);
+    var filteredTasks =  dataList.where((task) => task['Area'] == 'Mwanza'
+    ).toList();
+    var postList =  uniqueAngazaIds.toSet();
+    filteredTasks.removeWhere((element) => postList.contains(element["Angaza ID"]));
+
     // Get docs from collection reference
-    final query = '''
-    SELECT COUNT(*) 
-    FROM your_table_name 
-    WHERE 
-      "Area" = @area
-      AND "Task" = @task
-      AND "Status" = 'Pending'
-  ''';
-    final results = await connection.query(
-      query,
-      substitutionValues: {'area': await UserDetail().getUserArea(), 'task': value},
-    );
-    await connection.close();
 
     // Extract the count from the query result.
-    final count = results[0][0] as int;
+    final count = filteredTasks.length;
     return count;
   }
   Future<int> CountRestricted() async {
@@ -92,7 +92,7 @@ class USerCallDetail{
     // Get docs from collection reference
     final query = '''
     SELECT COUNT(*) 
-    FROM your_table_name 
+    FROM ace_task 
     WHERE 
       "Current Area" = @area
   ''';
@@ -114,7 +114,7 @@ class USerCallDetail{
     // Get docs from collection reference
     final query = '''
     SELECT COUNT(*) 
-    FROM your_table_name 
+    FROM ace_task 
     WHERE 
       "Current Area" = @area
       AND "Move" = 'Move Out'
@@ -138,7 +138,7 @@ class USerCallDetail{
     // Get docs from collection reference
     final query = '''
     SELECT COUNT(*) 
-    FROM your_table_name 
+    FROM ace_task 
     WHERE 
       "Current Area" = @area
       AND "Move" = 'Move In'
@@ -156,21 +156,24 @@ class USerCallDetail{
 
     return count;
   }
-  Future<int> CountCallMade(String value) async
-  {
-    var area = "Arusha";
+  Future<int> CountCallMade(String value) async {
     final connection =   await Database.connect();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var currentUser = prefs.getString("name");
+    var area = prefs.getString("area");
+
+
     final query = '''
-    SELECT COUNT(*) 
-    FROM your_table_name 
+    SELECT COUNT(DISTINCT "angaza_id") 
+    FROM feedback 
     WHERE 
-      "Area" = @area
-      AND "Task" = @task
-      AND "Status" = 'Complete'
+      "user" = @user
+      AND "status" = 'Complete'
+      AND "task" = @task
   ''';
     final results = await connection.query(
       query,
-      substitutionValues: {'area': await UserDetail().getUserArea(), 'task': value},
+      substitutionValues: {'user': currentUser, 'task': value},
     );
     await connection.close();
 
@@ -180,52 +183,51 @@ class USerCallDetail{
     return count;
   }
   Future<int> CountPendingVisit(String value) async {
-    var area = "Arusha";
-    final connection =   await Database.connect();
+    var connection = await Database.connect();
+    var results = await connection.query("SELECT angaza_id FROM feedback");
+    var uniqueAngazaIds = <String>{};
+    for (var row in results) {
+      uniqueAngazaIds.add(row[0] as String);
+    }
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final data = prefs.getString('filteredTasks') ?? '[]';
+    var dataList = jsonDecode(data);
+    var filteredTasks =  dataList.where((task) => task['Area'] == 'Mwanza'
+    ).toList();
+    var postList =  uniqueAngazaIds.toSet();
+    filteredTasks.removeWhere((element) => postList.contains(element["Angaza ID"]));
+
     // Get docs from collection reference
-    final query = '''
-    SELECT COUNT(*) 
-    FROM your_table_name 
-    WHERE 
-      "Area" = @area
-      AND "Task" = @task
-      AND "Status" = 'Pending'
-  ''';
-    final results = await connection.query(
-      query,
-      substitutionValues: {'area': await UserDetail().getUserArea(), 'task': value},
-    );
-    // Get data from docs and convert map to List
-    await connection.close();
 
     // Extract the count from the query result.
-    final count = results[0][0] as int;
-
+    final count = filteredTasks.length;
     return count;
   }
   Future<int> CountVisitMade(String value) async {
-    var area = "Arusha";
     final connection =   await Database.connect();
-    // Get docs from collection reference
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var currentUser = prefs.getString("name");
+    var area = prefs.getString("area");
     final query = '''
     SELECT COUNT(*) 
-    FROM your_table_name 
+    FROM feedback 
     WHERE 
-      "Area" = @area
-      AND "Task" = @task
-      AND "Status" = 'Complete'
+      "user" = @user
+      AND "status" = 'Complete'
+      AND "task" = @task
   ''';
+    // Get docs from collection reference
     final results = await connection.query(
       query,
-      substitutionValues: {'area': await UserDetail().getUserArea(), 'task': value},
+      substitutionValues: {'user': currentUser, 'task': value},
     );
     // Get data from docs and convert map to List
-    await connection.close();
-
-    // Extract the count from the query result.
     final count = results[0][0] as int;
+    print("value $count");
+    print("user $currentUser");
 
     return count;
+
   }
   Amount(String taskType)async{
     double total = 0.0;
@@ -257,25 +259,27 @@ class USerCallDetail{
     return total;
   }
   Future<int> CountComplete(String value) async {
-    var area = "Arusha";
     final connection =   await Database.connect();
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var currentUser = prefs.getString("name");
+    var area = prefs.getString("area");
     final query = '''
     SELECT COUNT(*) 
-    FROM your_table_name 
+    FROM feedback 
     WHERE 
-      "User UID" = @userUID
-      AND "Status" = 'Complete'
-      AND "Task Type" = @taskType
+      "user" = @user
+      AND "status" = 'Complete'
+      AND "task" = @task
   ''';
     // Get docs from collection reference
     final results = await connection.query(
       query,
-      substitutionValues: {'userUID': currentUser, 'taskType': value},
+      substitutionValues: {'user': currentUser, 'task': value},
     );
     // Get data from docs and convert map to List
     final count = results[0][0] as int;
+    print("value $count");
+    print("user $currentUser");
 
     return count;
   }

@@ -77,6 +77,7 @@ dependencies:
   location: ^4.4.0
   image_picker: ^0.8.6+2
   firebase_analytics: ^10.1.6
+  amplify_auth_cognito: ^1.0.1
   rxdart: ^0.27.7
   googleapis_auth: ^1.4.0
   googleapis: ^10.1.0

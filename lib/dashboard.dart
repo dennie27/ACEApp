@@ -3,16 +3,52 @@ import 'package:field_app/services/region_data.dart';
 import 'package:field_app/services/user_detail.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'utils/themes/theme.dart';
 
 
 
-class Home extends StatelessWidget {
+class Home extends StatefulWidget {
 
   @override
+  State<Home> createState() => _HomeState();
+}
+
+class _HomeState extends State<Home> {
+  String name ="";
+  String region = '';
+  String country ='';
+  String role = '';
+  void getUserAttributes() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    setState(() {
+
+      role = prefs.getString("role")!;
+      name = prefs.getString("name")!;
+      region = prefs.getString("region")!;
+      country = prefs.getString("country")!;
+    });
+    name = prefs.getString("name")!;
+    if (kDebugMode) {
+      print(country);
+      print(name);
+    }
+    // Process the user attributes
+
+  }
+  @override
+  void initState() {
+
+    super.initState();
+    getUserAttributes();
+
+  }
+  @override
   Widget build(BuildContext context) {
-    var currentUser = FirebaseAuth.instance.currentUser;
+
 
     return SingleChildScrollView(
       child: Container(
@@ -22,7 +58,7 @@ class Home extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
-            Text("${currentUser?.displayName}",style: TextStyle(fontSize: 10),),
+            Text("${name}",style: TextStyle(fontSize: 10),),
 //summary
             SizedBox(height: 5,),
             Container(

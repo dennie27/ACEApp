@@ -31,7 +31,24 @@
       "UnauthRoleName": "amplify-aceapp-dev-110651-unauthRole",
       "StackName": "amplify-aceapp-dev-110651",
       "StackId": "arn:aws:cloudformation:eu-west-1:522863258728:stack/amplify-aceapp-dev-110651/abb54780-52d5-11ee-aa20-0a6816a833c3",
-      "AmplifyAppId": "d1x6ilihjsko2e"
+      "AmplifyAppId": "d1x6ilihjsko2e",
+      "AuthTriggerTemplateURL": "https://s3.amazonaws.com/amplify-aceapp-dev-110651-deployment/amplify-cfn-templates/auth/auth-trigger-cloudformation-template.json"
+    },
+    "categories": {
+      "auth": {
+        "acedata": {},
+        "userPoolGroups": {}
+      },
+      "function": {
+        "acedataPostConfirmation": {
+          "GROUP": "aceuser",
+          "deploymentBucketName": "amplify-aceapp-dev-110651-deployment",
+          "s3Key": "amplify-builds/acedataPostConfirmation-55736c6e4f38636e6278-build.zip"
+        }
+      },
+      "storage": {
+        "aceapp": {}
+      }
     }
   }
 }

@@ -1,5 +1,7 @@
 // main.dart
 import 'dart:convert';
+import 'package:amplify_flutter/amplify_flutter.dart';
+import 'package:amplify_storage_s3/amplify_storage_s3.dart';
 import 'package:field_app/utils/themes/theme.dart';
 import 'package:http/http.dart' as http;
 import 'package:field_app/area/customer_vist.dart';
@@ -12,7 +14,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/db.dart';
 import '../widget/drop_down.dart';
 import 'customer_profile.dart';
 
@@ -61,40 +65,57 @@ class PendingCallsState extends State<PendingCalls> {
   var simnameupdate;
   String? Status;
   String? Area;
-  void userArea() {
-    UserDetail().getUserArea().then((value) {
+  bool isLogin = true;
+  String name ="";
+  String region = '';
+  String country ='';
+  List? data = [];
+  List? _data = [];
+  String role = '';
+  String area = '';
+  bool isLoading = true;
+  void userArea() async{
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var login  = prefs.get("isLogin");
+    var task =  prefs.get("filteredTasks");
+    print("dennis $task");
+    if(login == true){
       setState(() {
-        Area = value;
+        role = prefs.getString("role")!;
+        name = prefs.getString("name")!;
+        region = prefs.getString("region")!;
+        country = prefs.getString("country")!;
       });
-    });
+    }
   }
 
   String _searchQuery = '';
-  List<DocumentSnapshot> _data = [];
-  Future<void> _getDocuments() async {
-    QuerySnapshot querySnapshot = await firestore
-        .collection("new_calling")
-        .where("Area", isEqualTo: await UserDetail().getUserArea())
-        .where('Status', isNotEqualTo: 'Complete')
-        .get();
-    setState(() {
-      _data = querySnapshot.docs;
-      print(_data);
-    });
-  }
+  Future<void> ACETask() async {
+    var connection = await Database.connect();
+    var results = await connection.query("SELECT angaza_id FROM feedback");
+    var uniqueAngazaIds = <String>{};
+    for (var row in results) {
+      uniqueAngazaIds.add(row[0] as String);
+    }
 
-  Future<void> _getFilterdata(String Task) async {
-    QuerySnapshot querySnapshot = await firestore
-        .collection("new_calling")
-        .where("Area", isEqualTo: await UserDetail().getUserArea())
-        .where('Status', isNotEqualTo: 'Complete')
-        .where('Task', isEqualTo: Task)
-        .get();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final data = prefs.getString('filteredTasks') ?? '[]';
+    var dataList = jsonDecode(data);
+    var filteredTasks =  dataList.where((task) => task['Area'] == 'Mwanza'
+    ).toList();
+    var postList =  uniqueAngazaIds.toSet();
+    filteredTasks.removeWhere((element) => postList.contains(element["Angaza ID"]));
+    print(filteredTasks.length);
+
+    print(data);
     setState(() {
-      _data = querySnapshot.docs;
-      print(_data);
-      visit = false;
+      _data = filteredTasks;
+      isLoading = false;
     });
+
+    List<String> uniquearea = [];
+    print("postgres: ${postList}");
+    print(dataList);
   }
 
   int daysBetween(DateTime from, DateTime to) {
@@ -103,7 +124,9 @@ class PendingCallsState extends State<PendingCalls> {
     return (to.difference(from).inHours / 24).round();
   }
 
-  void callLogs(String docid, String feedback, String angaza) async {
+  void callLogs(String docid, String feedback, String angaza,String reason) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? name = prefs.getString('name');
     String _docid = docid;
 
     Iterable<CallLogEntry> entries = await CallLog.get();
@@ -117,30 +140,13 @@ class PendingCallsState extends State<PendingCalls> {
     accidupdate = entries.elementAt(0).phoneAccountId;
     simnameupdate = entries.elementAt(0).simDisplayName;
 
-    if (duration1update >= 30) {
-      CollectionReference newCalling = firestore.collection("new_calling");
-      await newCalling.doc(_docid).update({
-        'Duration': duration1update,
-        'ACE Name': currentUser?.displayName,
-        "User UID": currentUser?.uid,
-        "date": DateFormat('yyyy-MM-dd kk:mm').format(DateTime.now()),
-        "Task Type": "Call",
-        "Status": "Complete",
-        "Promise date": dateInputController.text,
-      });
-      CollectionReference feedBack = firestore.collection("FeedBack");
-      await feedBack.add({
-        "Angaza ID": angaza,
-        "Duration": duration1update,
-        "User UID": currentUser?.uid,
-        "date": DateFormat('yyyy-MM-dd kk:mm').format(DateTime.now()),
-        "Task Type": "Call",
-        "Status": "Complete",
-        "Promise date": DateFormat('yyyy-MM-dd')
-            .format(dateInputController.text as DateTime),
-        "Feedback": feedback
-      });
 
+    if (duration1update >= 0) {
+      var connection = await Database.connect();
+      var date =DateFormat('yyyy-MM-dd').format(DateTime.now());
+      var col = '"angaza_id", "duration", "user", "date", "task", "status", "promise_date", "feedback","reason"';
+      var value = "'$angaza','${duration1update}','$name','$date','Call','Complete','${date}','$feedback','$reason'";
+      var result = await connection.query("INSERT INTO feedback ($col) VALUES ($value)");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Your call has been record successfull'),
@@ -299,7 +305,7 @@ class PendingCallsState extends State<PendingCalls> {
                                       phoneselected != null &&
                                       dateInputController.text != null) {
                                     callLogs(_docid, feedbackController.text,
-                                        angaza);
+                                        angaza,feedbackselected!);
                                   } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
@@ -326,7 +332,7 @@ class PendingCallsState extends State<PendingCalls> {
   initState() {
     // at the beginning, all users are shown
     userArea();
-    _getDocuments();
+    ACETask();
     super.initState();
   }
 
@@ -352,20 +358,20 @@ class PendingCallsState extends State<PendingCalls> {
               onSelected: (value) {
                 switch (value) {
                   case 'All':
-                    _getDocuments();
+
                     print(value);
                     break;
                   case 'Call':
                     print(value);
-                    _getFilterdata('Call');
+
                     break;
                   case 'Disabled':
                     print(value);
-                    _getFilterdata('Disable');
+
                     break;
                   case 'Visit':
                     print(value);
-                    _getFilterdata('Visit');
+
                     break;
                 }
               },
@@ -394,23 +400,24 @@ class PendingCallsState extends State<PendingCalls> {
           height: 10,
         ),
         Expanded(
-          child: _data.length > 0
+          child: _data!.length > 0
               ? ListView.separated(
-                  itemCount: _data.length,
+                  itemCount: _data!.length,
                   itemBuilder: (context, index) {
-                    DocumentSnapshot data = _data[index];
+                   var data = _data![index];
                     String phoneList = '${data["Customer Phone Number"]},' +
                         '${data["Phone Number 1"].toString()},' +
                         '${data["Phone Number 2"].toString()},' +
                         '${data["Phone Number 3"].toString()},' +
                         '${data["Phone Number 4"].toString()},';
+                    print(phoneList);
                     if (data["Task"] == 'Visit') {
                       visit = true;
                     } else {
                       visit = false;
                     }
                     if (_searchQuery.isNotEmpty &&
-                        !_data[index]['Customer Name']
+                        !_data![index]['Customer Name']
                             .toLowerCase()
                             .contains(_searchQuery.toLowerCase())) {
                       return SizedBox();
@@ -421,12 +428,12 @@ class PendingCallsState extends State<PendingCalls> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => CProfile(
-                                id: data.id,
+                                id: data['Angaza ID'],
                                 angaza: data['Angaza ID'],
                               ),
                             ));
                       },
-                      key: ValueKey(_data[index]),
+                      key: ValueKey(_data![index]),
                       child: Card(
                         elevation: 8,
                         child: Padding(
@@ -500,25 +507,38 @@ class PendingCallsState extends State<PendingCalls> {
                                       : IconButton(
                                           padding: new EdgeInsets.all(0.0),
                                           onPressed: () {
-                                            _callNumber(phoneList, data.id,
+                                            _callNumber(phoneList,  data["Angaza ID"],
                                                 data["Angaza ID"]);
+
+                                           /* _callNumber(phoneList, data["Angaza ID"],
+                                                data["Angaza ID"]);*/
                                           },
                                           icon: Icon(Icons.phone, size: 20.0)),
-                                  IconButton(
-                                      padding: new EdgeInsets.all(0.0),
-                                      onPressed: () {
-                                        Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  CustomerVisit(
-                                                id: data.id,
-                                                angaza: data["Angaza ID"],
-                                              ),
-                                            ));
-                                      },
-                                      icon: Icon(Icons.location_on_outlined,
-                                          size: 20.0))
+
+                                 if(data['Location Latitudelongitude']==null || data['Location Latitudelongitude']=="")
+                                   IconButton(
+                                       padding: new EdgeInsets.all(0.0),
+                                       onPressed: () {
+                                       },
+                                       icon: Icon(Icons.location_off,
+                                           size: 20.0)),
+                                  if(data['Location Latitudelongitude'] !="")
+                                    IconButton(
+                                        padding: new EdgeInsets.all(0.0),
+                                        onPressed: () {
+                                          print(data['Location Latitudelongitude']);
+                                          Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    CustomerVisit(
+                                                      id:  data["Angaza ID"],
+                                                      angaza: data["Angaza ID"],
+                                                    ),
+                                              ));
+                                        },
+                                        icon: Icon(Icons.location_on_outlined,
+                                            size: 20.0))
                                 ],
                               )
                             ],

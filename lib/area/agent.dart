@@ -2,7 +2,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:field_app/area/customer_vist.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:field_app/services/user_detail.dart';
 import 'package:call_log/call_log.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -22,7 +21,6 @@ class AgentTask extends StatefulWidget {
 }
 
 class AgentTaskState extends State<AgentTask> {
-  String _searchText = '';
   bool visit = false;
   getPhoto(String client) async {
     String username = 'dennis+angaza@greenlightplanet.com';
@@ -32,7 +30,7 @@ class AgentTaskState extends State<AgentTask> {
     var headers = {
       "Accept": "application/json",
       "method": "GET",
-      "Authorization": '${basicAuth}',
+      "Authorization": basicAuth,
       "account_qid": "AC5156322",
     };
     var uri = Uri.parse('https://payg.angazadesign.com/data/clients/$client');
@@ -79,12 +77,12 @@ class AgentTaskState extends State<AgentTask> {
     });
   }
 
-  Future<void> _getFilterdata(String Task) async {
+  Future<void> _getFilterdata(String task) async {
     QuerySnapshot querySnapshot = await firestore
         .collection("new_calling")
         .where("Area", isEqualTo: await UserDetail().getUserArea())
         .where('Status', isNotEqualTo: 'Complete')
-        .where('Task', isEqualTo: Task)
+        .where('Task', isEqualTo: task)
         .get();
     setState(() {
       _data = querySnapshot.docs;
@@ -137,14 +135,14 @@ class AgentTaskState extends State<AgentTask> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Your call has been record successfull'),
         ),
       );
       return Navigator.of(context, rootNavigator: true).pop();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
               'the call was not recorded as its not meet required duretion'),
         ),
@@ -170,7 +168,6 @@ class AgentTaskState extends State<AgentTask> {
     final _formKey = GlobalKey<FormState>();
     phone = phone.toSet().toList();
     String txt = feedbackController.text;
-    String datetxt = dateInputController.text.toString();
 
     String _docid = docid;
     showDialog(
@@ -521,7 +518,7 @@ class AgentTaskState extends State<AgentTask> {
                   ),
                 ),
               );
-              ;
+
             },
             separatorBuilder: (BuildContext context, int index) =>
             const Divider(),

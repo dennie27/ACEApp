@@ -13,7 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/db.dart';
 import '../widget/drop_down.dart';
-import 'customer_vist.dart';
+import 'customer_visit.dart';
 
 class CProfile extends StatefulWidget {
   final String id;
@@ -76,8 +76,8 @@ class CProfileState extends State<CProfile> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Your call has been record successfull'),
+        const SnackBar(
+          content: Text('Your call has been record successful'),
         ),
       );
       return Navigator.of(context, rootNavigator: true).pop();
@@ -106,6 +106,7 @@ class CProfileState extends State<CProfile> {
     if(login == true){
       setState(() {
         role = prefs.getString("role")!;
+        area = prefs.getString("area")!;
         name = prefs.getString("name")!;
         region = prefs.getString("region")!;
         country = prefs.getString("country")!;
@@ -131,10 +132,10 @@ class CProfileState extends State<CProfile> {
         resultList.sort((a, b) => b.lastModified!.compareTo(a.lastModified!));
         StorageItem latestFile = resultList.first;
         ACETask(latestFile.key,account);
-        print(latestFile.key);
+
         return resultList.first;
       } else {
-        print('No files found in the S3 bucket with key containing "$key".');
+
         return null;
       }
     } on StorageException catch (e) {
@@ -146,7 +147,7 @@ class CProfileState extends State<CProfile> {
     var results = await connection.query("SELECT * FROM feedback WHERE angaza_id = @angaza_id",
        substitutionValues: {"angaza_id":account});
     List<String> uniquearea = [];
-    print("object: $results");
+
 
 
     try {
@@ -155,13 +156,12 @@ class CProfileState extends State<CProfile> {
           key: key)
           .result;
       final response = await http.get(urlResult.url);
-      print(response.body);
       final jsonData = jsonDecode(response.body);
-      print('File Data: $jsonData');
+
       final List<dynamic> filteredTasks = jsonData
-          .where((task) => task['Area'] == 'Mwanza' && task['Angaza ID'] == account
+          .where((task) => task['Area'] == area && task['Angaza ID'] == account
       ).toList();
-      print(filteredTasks);
+
       setState(() {
         _data = filteredTasks;
         data = results;
@@ -195,8 +195,8 @@ class CProfileState extends State<CProfile> {
         builder: (BuildContext context) {
           return SingleChildScrollView(
             child: AlertDialog(
-                title: Text('Customer Feedback'),
-                content: Container(
+                title: const Text('Customer Feedback'),
+                content: SizedBox(
                     height: 400,
                     child: Column(children: <Widget>[
                       AppDropDown(
@@ -210,13 +210,13 @@ class CProfileState extends State<CProfile> {
                             });
                             await FlutterPhoneDirectCaller.callNumber(phoneselected!);
                           }),
-                      SizedBox(height: 10,),
+                      const SizedBox(height: 10,),
                       DropdownButtonFormField(
                           isExpanded: true,
                           decoration: InputDecoration(
                             filled: true,
                             labelText: "feedback",
-                            border: OutlineInputBorder(),
+                            border: const OutlineInputBorder(),
                             hintStyle: TextStyle(color: Colors.grey[800]),
                             hintText: "Name",
                           ),
@@ -234,11 +234,11 @@ class CProfileState extends State<CProfile> {
                       TextField(
                         maxLines: 4,
                         controller: feedbackController,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Additional Feedback',
                         ),
                       ),
-                      SizedBox(height: 10,),
+                      const SizedBox(height: 10,),
                       TextFormField(
                         decoration: const InputDecoration(
                           hintText: 'Date',
@@ -256,14 +256,14 @@ class CProfileState extends State<CProfile> {
                               context: context,
                               initialDate: DateTime.now(),
                               firstDate: DateTime.now(),
-                              lastDate: DateTime.now().add(Duration(days: 5)));
+                              lastDate: DateTime.now().add(const Duration(days: 5)));
 
                           if (pickedDate != null) {
                             dateInputController.text =pickedDate.toString();
                           }
                         },
                       ),
-                      SizedBox(
+                      const SizedBox(
                         height: 20,
                       ),
                       Row(
@@ -273,13 +273,13 @@ class CProfileState extends State<CProfile> {
                               onPressed: () {
                                 Navigator.of(context).pop();
                               },
-                              child: Text('Cancel'),
+                              child: const Text('Cancel'),
                             ),
                             ElevatedButton(
                               onPressed: () {
                                 callLogs(_docid,feedbackController.text,angaza);
                               },
-                              child: Text('Submit'),
+                              child:const  Text('Submit'),
                             ),
                           ])
                     ]))),
@@ -289,7 +289,7 @@ class CProfileState extends State<CProfile> {
 
 
   void initState() {
-    print(widget.id);
+
     super.initState();
     listItems("ACE_Data", widget.angaza);
   }
@@ -302,7 +302,7 @@ class CProfileState extends State<CProfile> {
     var headers = {
       "Accept": "application/json",
       "method": "GET",
-      "Authorization": '${basicAuth}',
+      "Authorization": basicAuth,
       "account_qid": "AC5156322",
     };
     var uri = Uri.parse('https://payg.angazadesign.com/data/clients/$client');
@@ -325,7 +325,7 @@ class CProfileState extends State<CProfile> {
     var headers = {
       "Accept": "application/json",
       "method":"GET",
-      "Authorization": '${basicAuth}',
+      "Authorization": basicAuth,
       "account_qid" : "AC5156322",
     };
     var uri = Uri.parse('https://payg.angazadesign.com/data/accounts/$angazaid');
@@ -368,7 +368,7 @@ class CProfileState extends State<CProfile> {
                             if (photourl.hasData) {
                               String photo = photourl.data!;
                               return Container(
-                                margin: EdgeInsets.fromLTRB(0, 20, 0, 0),
+                                margin:const  EdgeInsets.fromLTRB(0, 20, 0, 0),
                                 width: 150.0,
                                 height: 150.0,
                                 color: Colors.grey.withOpacity(0.3),
@@ -377,15 +377,15 @@ class CProfileState extends State<CProfile> {
                             } else if (photourl.hasError) {
                               return
                                 Container(
-                                  margin: EdgeInsets.fromLTRB(0, 20, 0, 0),
+                                  margin: const EdgeInsets.fromLTRB(0, 20, 0, 0),
                                   width: 150.0,
                                   height: 150.0,
                                   color: Colors.grey.withOpacity(0.3),
-                                  child: Center(child: Icon(Icons.person)),
+                                  child: const Center(child: Icon(Icons.person)),
                                 )
                               ;
                             } else {
-                              return CircularProgressIndicator();
+                              return const CircularProgressIndicator();
                             }
                           })),
                         Column(
@@ -396,14 +396,14 @@ class CProfileState extends State<CProfile> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Column(
+                                const Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text('Name:',
-                                        style: const TextStyle(fontSize: 20,
+                                        style: TextStyle(fontSize: 20,
                                             fontWeight: FontWeight.bold)),
                                     Text('Account:',
-                                        style: const TextStyle(fontSize: 20,
+                                        style: TextStyle(fontSize: 20,
                                             fontWeight: FontWeight.bold)),
                                   ],
                                 ),
@@ -441,7 +441,7 @@ class CProfileState extends State<CProfile> {
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) =>
-                                                CustomerVisit(id: "id",
+                                            const CustomerVisit(id: "id",
                                                   angaza: "Angaza ID",
                                                 ),
                                           ));
@@ -470,42 +470,42 @@ class CProfileState extends State<CProfile> {
                                 mainAxisAlignment: MainAxisAlignment
                                     .spaceEvenly,
                                 children: [
-                                  Column(
+                                  const Column(
                                     crossAxisAlignment: CrossAxisAlignment
                                         .start,
                                     children: [
                                       Text('Agent Name: ',
-                                          style: const TextStyle(fontSize: 15,
+                                          style: TextStyle(fontSize: 15,
                                               fontWeight: FontWeight.bold)),
                                       Text(
                                         'Agent Username: ',
-                                        style: const TextStyle(fontSize: 15,
+                                        style: TextStyle(fontSize: 15,
                                             fontWeight: FontWeight.bold),
                                       ),
                                       Text(
                                         'Registration Date: ',
-                                        style: const TextStyle(fontSize: 15,
+                                        style: TextStyle(fontSize: 15,
                                             fontWeight: FontWeight.bold),
                                       ),
                                       Text(
                                         'Product Name: ',
-                                        style: const TextStyle(fontSize: 15,
+                                        style: TextStyle(fontSize: 15,
                                             fontWeight: FontWeight.bold),
                                       ),
                                       Text(
                                         'Is FPD: ',
-                                        style: const TextStyle(fontSize: 15,
+                                        style: TextStyle(fontSize: 15,
                                             fontWeight: FontWeight.bold),
                                       ),
                                       Text('Amount to Collect: ',
-                                        style: const TextStyle(fontSize: 15,
+                                        style: TextStyle(fontSize: 15,
                                             fontWeight: FontWeight.bold),),
                                       Text('Amount Collected: ',
-                                        style: const TextStyle(fontSize: 15,
+                                        style: TextStyle(fontSize: 15,
                                             fontWeight: FontWeight.bold),),
 
                                       Text('Promise date: ',
-                                          style: const TextStyle(fontSize: 15,
+                                          style: TextStyle(fontSize: 15,
                                               fontWeight: FontWeight.bold)),
                                     ],
                                   ),
@@ -523,9 +523,9 @@ class CProfileState extends State<CProfile> {
                                           _data![0]['Date of Registration Date']
                                       ),
 
-                                      Text(
+                                      const Text(
                                         'Product Name',
-                                        style: const TextStyle(fontSize: 15),
+                                        style: TextStyle(fontSize: 15),
                                       ),
                                       Text(
                                         _data![0]['Is First Pay Defaulted V2 (Yes / No)'],
@@ -533,11 +533,11 @@ class CProfileState extends State<CProfile> {
                                       ),
                                       Text(_data![0]['Amount Payable to Exit Risk Permanently RT'],
                                           style: const TextStyle(fontSize: 15)),
-                                      Text('Amount Collected',
-                                          style: const TextStyle(fontSize: 15)),
+                                      const  Text('Amount Collected',
+                                          style: TextStyle(fontSize: 15)),
 
-                                      Text('Promise date',
-                                          style: const TextStyle(fontSize: 15)),
+                                      const  Text('Promise date',
+                                          style: TextStyle(fontSize: 15)),
                                     ],
                                   )
                                 ],
@@ -545,7 +545,7 @@ class CProfileState extends State<CProfile> {
                             ),
 
 
-                            SizedBox(
+                            const SizedBox(
                               height: 10,
                             ),
 
@@ -562,10 +562,10 @@ class CProfileState extends State<CProfile> {
                       dense: true,
                     ),
                   ),
-                  SizedBox(
+                  const SizedBox(
                     height: 10,
                   ),
-                  Row(
+                  const Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       Text(
@@ -587,13 +587,13 @@ class CProfileState extends State<CProfile> {
                           ))
                     ],
                   ),
-                  Container(
+                  SizedBox(
                       height: 300,
                       child:
                       ListView.separated(
                           itemCount: data!.length,
                           separatorBuilder: (BuildContext context, int index) {
-                            return Divider();
+                            return const Divider();
                           },
                           itemBuilder: (BuildContext context, int index) {
                             return CustomFeedBack(
@@ -605,7 +605,7 @@ class CProfileState extends State<CProfile> {
                             );
                           })
                   )
-                ]):Center(child: CircularProgressIndicator(
+                ]):const Center(child: CircularProgressIndicator(
 
             ),)
         )
@@ -622,10 +622,10 @@ class CustomFeedBack extends StatefulWidget {
   const CustomFeedBack({Key? key,required this.serial, required this.feedback,required this.task,required this.date}) : super(key: key);
 
   @override
-  _CustomFeedBackState createState() => _CustomFeedBackState();
+  CustomFeedBackState createState() => CustomFeedBackState();
 }
 
-class _CustomFeedBackState extends State<CustomFeedBack> {
+class CustomFeedBackState extends State<CustomFeedBack> {
   bool _showContainer = false;
   @override
   Widget build(BuildContext context) {
@@ -639,7 +639,7 @@ class _CustomFeedBackState extends State<CustomFeedBack> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -651,10 +651,10 @@ class _CustomFeedBackState extends State<CustomFeedBack> {
           ),
           _showContainer
               ? Container(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   child: Text(
                     'Feedback: ${widget.feedback}!',
-                    style: TextStyle(fontSize: 18, color: Colors.black),
+                    style: const TextStyle(fontSize: 18, color: Colors.black),
                   ),
                 )
               : Container(),

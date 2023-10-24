@@ -1,14 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
+
 import 'dart:io';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:field_app/area/location.dart';
-import 'package:field_app/pending_task.dart';
-import 'package:field_app/task.dart';
+import 'package:field_app/area/pending_calls.dart';
 import 'package:field_app/widget/drop_down.dart';
 import 'package:flutter/foundation.dart';
-import 'package:amplify_storage_s3/amplify_storage_s3.dart';
 import 'package:google_maps_widget/google_maps_widget.dart';
 import 'package:http/http.dart' as http;
 import 'package:camera/camera.dart';
@@ -20,7 +18,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../services/db.dart';
 import '../utils/themes/theme.dart';
 class CustomerVisit  extends StatefulWidget {
@@ -38,25 +35,18 @@ class CustomerVisitState extends State<CustomerVisit> {
 
   Future<void> ACETask(account) async {
 
-    var connection = await Database.connect();
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final data = prefs.getString('filteredTasks') ?? '[]';
+    var area = prefs.getString('area');
     var dataList = jsonDecode(data);
-    var filteredTasks =  dataList.where((task) => task['Area'] == 'Mwanza' && task['Angaza ID']
+    var filteredTasks =  dataList.where((task) => task['Area'] ==area && task['Angaza ID']
         == account
     ).toList();
-    print(filteredTasks.length);
-
-    print(data);
     setState(() {
       _data = filteredTasks;
       isLoading = true;
     });
-
-    List<String> uniquearea = [];
-    print("postgres: ${filteredTasks}");
-    print(dataList);
   }
   String? phoneselected;
   String? feedbackselected;
@@ -86,11 +76,10 @@ class CustomerVisitState extends State<CustomerVisit> {
       "Authorization": '${basicAuth}',
       "account_qid" : "AC5156322",
     };
-    final httpPackageUrl = Uri.https('payg.angazadesign.com', '/data/clients',{"account_qid" : "AC5156322"},
-    );
+
     var uri = Uri.parse('https://payg.angazadesign.com/data/accounts/$angazaid');
     var response = await http.get(uri, headers: headers);
-    var data = response.body;
+
 
     var dd = json.decode(response.body);
     var id = dd['client_qids'][0];
@@ -201,46 +190,13 @@ class CustomerVisitState extends State<CustomerVisit> {
         var col = '"angaza_id", "user", "date", "task", "status", "promise_date", "feedback","reason","location"';
         var value = "'${widget.angaza}','dennis Juma','$date','Visit','Complete','$date','deniis feedback','$reasonselected','{newLocation}'";
         var result = await connection.query("INSERT INTO feedback ($col) VALUES ($value)");
-        print(result);
-        /* final CollectionReference collectionReference = firestore.collection("new_calling");
-        var currentUser = FirebaseAuth.instance.currentUser;
-        final uploadfile = storage.ref(destination);
-        await collectionReference.doc(widget.id).update(
-            { 'Reason':reasonselected,
-              'Status':'Complete',
-              "Promise date": dateInputController.text,
-              'User UID': currentUser?.uid,
-              'date': DateFormat('yyyy-MM-dd kk:mm').format(DateTime.now()),
-              'Task Type': 'Visit',
-              'image': destination,
-              'Location' : newLocation
-            }
-
-
-        );
-        CollectionReference feedBack = firestore.collection("FeedBack");
-        await feedBack.add({
-          "Angaza ID":widget.angaza,
-          'Reason':reasonselected,
-              'Status':'Complete',
-          'Promise date': dateInputController.text,
-          'User UID': currentUser?.uid,
-              'date': DateFormat('yyyy-MM-dd kk:mm').format(DateTime.now()),
-              'Task Type': 'Visit',
-              'image': destination,
-              'Task':'Visit',
-              'Location' : newLocation
-        });*/
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Task Updated successfully'),
           ),
         );
+        Navigator.of(context).pop();
       }catch (e) {
-        if(kDebugMode){
-          print('An error occurred when submitting: $e');
-        }
-        print(e);
         ScaffoldMessenger.of(context).showSnackBar(
            SnackBar(
 
@@ -380,7 +336,7 @@ class CustomerVisitState extends State<CustomerVisit> {
                               } else if (photourl.hasError) {
                                 return Text('Error: ${photourl.error}');
                               } else {
-                                return CircularProgressIndicator();
+                                return const CircularProgressIndicator();
                               }
                             })),
                     Text('Name:  ${_data![0]['Customer Name']}',style:const TextStyle(fontSize: 15)),
@@ -428,23 +384,23 @@ class CustomerVisitState extends State<CustomerVisit> {
                                   setState(() {
                                     reasonselected = value;
                                   });}),
-              SizedBox(height: 10,),
+              const SizedBox(height: 10,),
              if(reasonselected != null)
                TextFormField(
                  controller: feedbackController,
                    maxLines: 5,
                    decoration: InputDecoration(
               labelText:reasonselected,
-                     focusedBorder: OutlineInputBorder(
+                     focusedBorder: const OutlineInputBorder(
                        borderSide:
                        BorderSide(color: AppColor.mycolor, width: 1.0),
                      ),
-                     enabledBorder: OutlineInputBorder(
+                     enabledBorder: const OutlineInputBorder(
                        borderSide:
                        BorderSide(color: Colors.black12, width: 1.0),
                      ),
                    )),
-              SizedBox(height: 10,),
+              const SizedBox(height: 10,),
 
               SizedBox(
                 width: double.infinity,
@@ -480,14 +436,14 @@ class CustomerVisitState extends State<CustomerVisit> {
               context: context,
               initialDate: DateTime.now(),
               firstDate: DateTime.now(),
-              lastDate: DateTime.now().add(Duration(days: 5)));
+              lastDate: DateTime.now().add(const Duration(days: 5)));
 
               if (pickedDate != null) {
               dateInputController.text = DateFormat('yyyy-MM-dd').format(pickedDate).toString();
               }
               },
               ),
-                            SizedBox(
+                            const SizedBox(
                               height: 10,
                             ),
                             Padding(
@@ -497,7 +453,7 @@ class CustomerVisitState extends State<CustomerVisit> {
                                 height: 50,
                                 child: ElevatedButton(onPressed: (){
                                   updateCustomer();
-                                  PendingTask();
+                                  const PendingCalls();
                                 }, child:const Text('Submit')),
                               ),
                             )
@@ -513,9 +469,9 @@ class CustomerVisitState extends State<CustomerVisit> {
                         child: ElevatedButton.icon(
               onPressed: () {
                 if(_data![0]['Location Latitudelongitude'] == null || _data![0]['Location Latitudelongitude'] == ''){
-                 print("no location found");
+
                 }else{
-                  print( _data![0]['Location Latitudelongitude']);
+
                   Navigator.push(context,
                       MaterialPageRoute(
                         builder: (context) =>
@@ -531,7 +487,7 @@ class CustomerVisitState extends State<CustomerVisit> {
                       ),
                     ),
                                      ],
-                ):Center(child: CircularProgressIndicator(
+                ):const Center(child: CircularProgressIndicator(
 
     ))
       )

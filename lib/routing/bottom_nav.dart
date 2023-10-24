@@ -18,8 +18,6 @@ import 'appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import '../../utils/themes/theme.dart';
-import '../../task.dart';
-import '../../dashboard.dart';
 
 class NavPage extends StatefulWidget{
   @override

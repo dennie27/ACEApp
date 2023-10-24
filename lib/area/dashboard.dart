@@ -15,6 +15,7 @@ class AreaDashboardState extends State<AreaDashboard> {
   String name ="";
   String region = '';
   String country ='';
+  String area ='';
   String role = '';
   void userArea() async{
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -25,6 +26,7 @@ class AreaDashboardState extends State<AreaDashboard> {
       setState(() {
         isLogin = false;
         role = prefs.getString("role")!;
+        area = prefs.getString("area")!;
         name = prefs.getString("name")!;
         region = prefs.getString("region")!;
         country = prefs.getString("country")!;
@@ -66,17 +68,17 @@ class AreaDashboardState extends State<AreaDashboard> {
                 RowData(
                   value: 0,
                   label: 'Call Attempt',
-                  future: USerCallDetail().CountComplete('Call'),
+                  future: USerCallDetail().countComplete('Call'),
                 ),
                 RowData(
                   value: 0,
                   label: 'Call Made',
-                  future: USerCallDetail().CountCallMade('Call'),
+                  future: USerCallDetail().countCallMade('Call'),
                 ),
                 RowData(
                   label: 'Calls Pending',
                   value: 0,
-                  future: USerCallDetail().CountPendingCall('Call'),
+                  future: USerCallDetail().countPendingCall('Call'),
                 ),
 
 
@@ -87,17 +89,17 @@ class AreaDashboardState extends State<AreaDashboard> {
                 RowData(
                   value: 0,
                   label: 'Complete Rate',
-                  future: USerCallDetail().CompleteCallRate('Call'),
+                  future: USerCallDetail().completeCallRate('Call'),
                 ),
                 RowData(
                   value: 32,
                   label: 'Success Calls',
-                  future: USerCallDetail().CountSucceful('Call'),
+                  future: USerCallDetail().countSucceful('Call'),
                 ),
                 RowData(
                   value: 35,
                   label: 'Total Collected',
-                  future: USerCallDetail().Amount('Call'),
+                  future: USerCallDetail().amount('Call'),
                 ),
               ],
             ),
@@ -111,17 +113,17 @@ class AreaDashboardState extends State<AreaDashboard> {
                 RowData(
                   value: 20,
                   label: 'Visit Attempt',
-                  future: USerCallDetail().CountComplete('Visit'),
+                  future: USerCallDetail().countComplete('Visit'),
                 ),
                 RowData(
                   value: 20,
                   label: 'Visit Made',
-                  future: USerCallDetail().CountVisitMade('Visit'),
+                  future: USerCallDetail().countVisitMade('Visit'),
                 ),
                 RowData(
                   value: 40,
                   label: 'Visit Pending',
-                  future: USerCallDetail().CountPendingVisit('Visit'),
+                  future: USerCallDetail().countPendingVisit('Visit'),
                 ),
               ],
             ),
@@ -131,18 +133,18 @@ class AreaDashboardState extends State<AreaDashboard> {
                 RowData(
                   value: 35,
                   label: 'Complete Rate',
-                  future: USerCallDetail().CompleteVistRate('Visit'),
+                  future: USerCallDetail().completeVistRate('Visit'),
                 ),
 
                 RowData(
                   value: 20,
                   label: 'Success Visit',
-                  future: USerCallDetail().CountSucceful('Visit'),
+                  future: USerCallDetail().countSucceful('Visit'),
                 ),
                 RowData(
                   value: 35,
                   label: 'Total Collected',
-                  future: USerCallDetail().Amount('Visit'),
+                  future: USerCallDetail().amount('Visit'),
                 ),
               ],
             ),
@@ -157,17 +159,17 @@ class AreaDashboardState extends State<AreaDashboard> {
                 RowData(
                   value: 0,
                   label: 'Task Attempt',
-                  future: USerCallDetail().CountComplete('Disable'),
+                  future: USerCallDetail().countComplete('Disable'),
                 ),
                 RowData(
                   value: 0,
                   label: 'Task Made',
-                  future: USerCallDetail().CountCallMade('Disable'),
+                  future: USerCallDetail().countCallMade('Disable'),
                 ),
                 RowData(
                   label: 'Task Pending',
                   value: 0,
-                  future: USerCallDetail().CountPendingCall('Disable'),
+                  future: USerCallDetail().countPendingCall('Disable'),
                 ),
 
 
@@ -178,17 +180,17 @@ class AreaDashboardState extends State<AreaDashboard> {
                 RowData(
                   value: 0,
                   label: 'Complete Rate',
-                  future: USerCallDetail().CompleteCallRate('Disable'),
+                  future: USerCallDetail().completeCallRate('Disable'),
                 ),
                 RowData(
                   value: 32,
                   label: 'Success Calls',
-                  future: USerCallDetail().CountSucceful('Disable'),
+                  future: USerCallDetail().countSucceful('Disable'),
                 ),
                 RowData(
                   value: 35,
                   label: 'Total Collected',
-                  future: USerCallDetail().Amount('Disable'),
+                  future: USerCallDetail().amount('Disable'),
                 ),
               ],
             ),
@@ -202,17 +204,17 @@ class AreaDashboardState extends State<AreaDashboard> {
                 RowData(
                   value: 0,
                   label: 'Agent Restricted',
-                  future: USerCallDetail().CountRestricted(),
+                  future: USerCallDetail().countRestricted(),
                 ),
                 RowData(
                   value: 0,
                   label: 'Agent Moved out',
-                  future: USerCallDetail().CountMoveOut(),
+                  future: USerCallDetail().countMoveOut(),
                 ),
                 RowData(
                   label: 'Agent Move In',
                   value: 0,
-                  future: USerCallDetail().CountMoveIn(),
+                  future: USerCallDetail().countMoveIn(),
                 ),
 
 

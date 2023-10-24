@@ -1,11 +1,9 @@
 import 'dart:convert';
 
-import 'package:amplify_flutter/amplify_flutter.dart';
-import 'package:amplify_storage_s3/amplify_storage_s3.dart';
+
 import 'package:field_app/services/db.dart';
 import 'package:field_app/services/user_detail.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -20,10 +18,8 @@ class USerCallDetail{
   var user = FirebaseFirestore.instance.collection('Users');
 
 
-  CollectionReference<Map<String, dynamic>> _calling =
+  CollectionReference<Map<String, dynamic>> calling =
   FirebaseFirestore.instance.collection('new_calling');
-  CollectionReference<Map<String, dynamic>> _agent =
-  FirebaseFirestore.instance.collection('agent_restricted');
   CollectionReference<Map<String, dynamic>> feedback =
   FirebaseFirestore.instance.collection('FeedBack');
   //var uid = FirebaseFirestore.instance.collection("Users").where("UID",isEqualTo:currentUser);
@@ -51,9 +47,10 @@ class USerCallDetail{
 
   }
   //get data by user area
-  Future<int> CountDataByArea() async {
+  Future<int> countDataByArea() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var area = prefs.getString("area");
 
-    var area = "Arusha";
     final connection =   await Database.connect();
 
     final results = await connection.query(
@@ -65,7 +62,7 @@ class USerCallDetail{
     final count = results[0][0] as int;
     return count;
   }
-  Future<int> CountPendingCall(String value) async {
+  Future<int> countPendingCall(String value) async {
     var connection = await Database.connect();
     var results = await connection.query("SELECT angaza_id FROM feedback");
     var uniqueAngazaIds = <String>{};
@@ -74,23 +71,20 @@ class USerCallDetail{
     }
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final data = prefs.getString('filteredTasks') ?? '[]';
+    var area  =  prefs.getString('area');
     var dataList = jsonDecode(data);
-    var filteredTasks =  dataList.where((task) => task['Area'] == 'Mwanza'
+    var filteredTasks =  dataList.where((task) => task['Area'] == area
     ).toList();
     var postList =  uniqueAngazaIds.toSet();
     filteredTasks.removeWhere((element) => postList.contains(element["Angaza ID"]));
-
-    // Get docs from collection reference
-
     // Extract the count from the query result.
     final count = filteredTasks.length;
     return count;
   }
-  Future<int> CountRestricted() async {
-    var area = "Arusha";
+  Future<int> countRestricted() async {
     final connection =   await Database.connect();
     // Get docs from collection reference
-    final query = '''
+    const query = '''
     SELECT COUNT(*) 
     FROM ace_task 
     WHERE 
@@ -108,11 +102,11 @@ class USerCallDetail{
 
     return count;
   }
-  Future<int> CountMoveOut() async {
-    var area = "Arusha";
+  Future<int> countMoveOut() async {
+
     final connection =   await Database.connect();
     // Get docs from collection reference
-    final query = '''
+    const query = '''
     SELECT COUNT(*) 
     FROM ace_task 
     WHERE 
@@ -132,11 +126,11 @@ class USerCallDetail{
 
     return count;
   }
-  Future<int> CountMoveIn() async {
-    var area = "Arusha";
+  Future<int> countMoveIn() async {
+
     final connection =   await Database.connect();
     // Get docs from collection reference
-    final query = '''
+    const query = '''
     SELECT COUNT(*) 
     FROM ace_task 
     WHERE 
@@ -156,14 +150,13 @@ class USerCallDetail{
 
     return count;
   }
-  Future<int> CountCallMade(String value) async {
+  Future<int> countCallMade(String value) async {
     final connection =   await Database.connect();
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var currentUser = prefs.getString("name");
-    var area = prefs.getString("area");
 
 
-    final query = '''
+    const query = '''
     SELECT COUNT(DISTINCT "angaza_id") 
     FROM feedback 
     WHERE 
@@ -182,7 +175,7 @@ class USerCallDetail{
 
     return count;
   }
-  Future<int> CountPendingVisit(String value) async {
+  Future<int> countPendingVisit(String value) async {
     var connection = await Database.connect();
     var results = await connection.query("SELECT angaza_id FROM feedback");
     var uniqueAngazaIds = <String>{};
@@ -191,8 +184,9 @@ class USerCallDetail{
     }
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final data = prefs.getString('filteredTasks') ?? '[]';
+    var area = prefs.getString('area')!;
     var dataList = jsonDecode(data);
-    var filteredTasks =  dataList.where((task) => task['Area'] == 'Mwanza'
+    var filteredTasks =  dataList.where((task) => task['Area'] == area
     ).toList();
     var postList =  uniqueAngazaIds.toSet();
     filteredTasks.removeWhere((element) => postList.contains(element["Angaza ID"]));
@@ -203,12 +197,11 @@ class USerCallDetail{
     final count = filteredTasks.length;
     return count;
   }
-  Future<int> CountVisitMade(String value) async {
+  Future<int> countVisitMade(String value) async {
     final connection =   await Database.connect();
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var currentUser = prefs.getString("name");
-    var area = prefs.getString("area");
-    final query = '''
+    const query = '''
     SELECT COUNT(*) 
     FROM feedback 
     WHERE 
@@ -223,15 +216,14 @@ class USerCallDetail{
     );
     // Get data from docs and convert map to List
     final count = results[0][0] as int;
-    print("value $count");
-    print("user $currentUser");
+
 
     return count;
 
   }
-  Amount(String taskType)async{
+  amount(String taskType)async{
     double total = 0.0;
-    var querySnapshot = await _calling.
+    var querySnapshot = await calling.
     where('Area', isEqualTo: await UserDetail().getUserArea()).
     where('Task Type',isEqualTo: taskType).get();
     // Get data from docs and convert map to List
@@ -242,13 +234,12 @@ class USerCallDetail{
     return total.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},');
 
   }
-  AmountCollected(String value) async {
+  amountCollected(String value) async {
     int total = 0;
    var area = await UserDetail().getUserArea().then((areaValue){
     return areaValue;
    });
-   var taskvalue = value;
-   var query = await _calling.
+   var query = await calling.
     where('Area', isEqualTo: area).
     where('Task Type',isEqualTo: value).get();
     query.docs.forEach((element) {
@@ -258,12 +249,12 @@ class USerCallDetail{
     // Get data from docs and convert map to List
     return total;
   }
-  Future<int> CountComplete(String value) async {
+  Future<int> countComplete(String value) async {
     final connection =   await Database.connect();
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var currentUser = prefs.getString("name");
-    var area = prefs.getString("area");
-    final query = '''
+
+    const query = '''
     SELECT COUNT(*) 
     FROM feedback 
     WHERE 
@@ -278,12 +269,10 @@ class USerCallDetail{
     );
     // Get data from docs and convert map to List
     final count = results[0][0] as int;
-    print("value $count");
-    print("user $currentUser");
 
     return count;
   }
-  Future<int> CountCompleteTask(String value) async {
+  Future<int> countCompleteTask(String value) async {
     // Get docs from collection reference
     var querySnapshot = await feedback.
     where('Area', isEqualTo: await UserDetail().getUserArea()).
@@ -293,9 +282,9 @@ class USerCallDetail{
     int allData = querySnapshot.size;
     return allData;
   }
-  Future<int> CountSucceful(String value) async {
+  Future<int> countSucceful(String value) async {
     // Get docs from collection reference
-    var querySnapshot = await _calling.
+    var querySnapshot = await calling.
     where('Area', isEqualTo: await UserDetail().getUserArea()).
     where('successfull', isEqualTo: 'Yes').
     where('Task Type',isEqualTo: value).get();
@@ -303,23 +292,23 @@ class USerCallDetail{
     int allData = querySnapshot.size;
     return allData;
   }
-  Future<String> CompleteCallRate(String value) async {
+  Future<String> completeCallRate(String value) async {
 
-    int pending = await CountPendingCall(value);
-    int complete = await CountCallMade(value);
+    int pending = await countPendingCall(value);
+    int complete = await countCallMade(value);
     double rate  = (complete.toDouble()/(complete.toDouble()+pending.toDouble()))*100;
     return rate.toStringAsFixed(0)+"%";
   }
-  Future<String> CompleteVistRate(String value) async {
+  Future<String> completeVistRate(String value) async {
 
-    int pending = await CountPendingVisit(value);
-    int complete = await CountVisitMade(value);
+    int pending = await countPendingVisit(value);
+    int complete = await countVisitMade(value);
     double rate  = (complete.toDouble()/(complete.toDouble()+pending.toDouble()))*100;
     return rate.toStringAsFixed(0)+"%";
   }
     Future getDataByArea() async {
     // Get docs from collection reference
-    return await _calling.where('Area', isEqualTo: await UserDetail().getUserArea().snapshot());
+    return await calling.where('Area', isEqualTo: await UserDetail().getUserArea().snapshot());
     // Get data from docs and convert map to List
   }
 
@@ -333,7 +322,7 @@ GetAccountDetail() async{
   var headers = {
     "Accept": "application/json",
     "method":"GET",
-    "Authorization": '${basicAuth}',
+    "Authorization": basicAuth,
     "account_qid" : "AC5156322",
   };
   var uri = Uri.parse('https://payg.angazadesign.com/data/accounts/AC7406321');

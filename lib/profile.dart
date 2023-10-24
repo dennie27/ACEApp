@@ -29,7 +29,7 @@ class ProfileState extends State<Profile> {
     });
     name = prefs.getString("name")!;
     email = prefs.getString("email")!;
-    userRegion =  prefs.getString("region")!;
+    userRegion =  prefs.getString("area")!;
     country =  prefs.getString("country")!;
     role = prefs.getString("role")!;
     zone =  prefs.getString("zone")!;
@@ -66,7 +66,7 @@ class ProfileState extends State<Profile> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               TextButton(onPressed: (){},child: Text('$role',style: TextStyle(color: Colors.black),)),
-              TextButton(onPressed: (){},child:Text('Region: $userRegion',style: TextStyle(color: Colors.black))),
+              TextButton(onPressed: (){},child:Text('Area: $userRegion',style: TextStyle(color: Colors.black))),
 
             ],
 

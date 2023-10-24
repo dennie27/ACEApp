@@ -59,9 +59,9 @@ class CustomerLocationState extends State<CustomerLocation> {
     getPolyPoints();
   }
   Marker _destination = Marker(
-    markerId: MarkerId('destination'),
+    markerId: const MarkerId('destination'),
     position: LatLng(-4.211560, 35.748932),
-    infoWindow: InfoWindow(title: 'Destination'),
+    infoWindow: const InfoWindow(title: 'Destination'),
     icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
   );
   List<LatLng> polylineCoordinates = [];

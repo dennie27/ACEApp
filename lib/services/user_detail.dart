@@ -1,5 +1,4 @@
 
-import 'package:http/http.dart'as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 
@@ -8,11 +7,10 @@ class UserDetail{
 
   Future<void> getUser() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    var currentUser = prefs.getString("name");
     // Get docs from collection reference
     // Get data from docs and convert map to List
 
-    print("doc length $currentUser");
+
   }
   //get data by user area
  getDataByID(String value) async {

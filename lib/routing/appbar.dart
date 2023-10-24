@@ -1,11 +1,16 @@
 import 'package:field_app/profile.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../login.dart';
 import '../notification.dart';
 import '../services/auth_services.dart';
 
 class SKAppBar extends StatelessWidget implements PreferredSizeWidget {
+  Future<void> clearSharedPreferences() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+  }
   final double height;
 
   SKAppBar({
@@ -31,12 +36,10 @@ class SKAppBar extends StatelessWidget implements PreferredSizeWidget {
               ));
         }, icon: Icon(Icons.notifications)),
         IconButton(onPressed: (){
-          Authentication.signOut();
+          clearSharedPreferences();
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
-              builder: (context) => Login(
-
-              ),
+              builder: (context) =>LoginSignupPage(),
             ),
           );
         }, icon: Icon(Icons.logout)),

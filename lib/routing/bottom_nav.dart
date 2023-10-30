@@ -2,12 +2,8 @@
 
 import 'dart:convert';
 import 'dart:io';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:field_app/area/dashboard.dart';
-import 'package:field_app/services/user_detail.dart';
-import 'package:googleapis_auth/auth_io.dart';
-import 'package:googleapis_auth/googleapis_auth.dart';
-import 'package:googleapis/fcm/v1.dart' as fcm;
-import 'package:field_app/services/auth_services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';

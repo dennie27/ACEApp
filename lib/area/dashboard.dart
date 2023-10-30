@@ -3,6 +3,7 @@ import 'package:field_app/services/calls_detail.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/themes/theme.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class AreaDashboard extends StatefulWidget {
   const AreaDashboard({Key? key}) : super(key: key);
@@ -17,6 +18,57 @@ class AreaDashboardState extends State<AreaDashboard> {
   String country ='';
   String area ='';
   String role = '';
+  void showPermanentlyDeniedDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Permission Denied'),
+        content: Text('You have permanently denied some permissions.\n'
+            ' Please enable them in app settings.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              openAppSettings();
+              Navigator.of(context).pop();
+            },
+            child: Text('Open App Settings'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  checkCallLog() async{
+    Map<Permission, PermissionStatus> statuses = await [
+      Permission.camera,
+      Permission.phone,
+      Permission.storage
+    ].request();
+    var log =  await Permission.phone.request();
+
+    if(statuses[Permission.storage]!.isPermanentlyDenied ||
+        statuses[Permission.phone]!.isPermanentlyDenied
+        ||statuses[Permission.camera]!.isPermanentlyDenied){
+
+      showPermanentlyDeniedDialog();
+    }else{
+      if(statuses[Permission.storage]!.isDenied){
+        await Permission.storage.request() ;
+      }
+      if(statuses[Permission.phone]!.isDenied){
+        await Permission.phone.request() ;
+      }
+      if(statuses[Permission.camera]!.isDenied){
+        await Permission.camera.request() ;
+      }
+
+    }
+    print(await Permission.storage.status);
+    print(await Permission.phone.status);
+    print(await Permission.camera.status);
+
+
+  }
   void userArea() async{
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
@@ -40,6 +92,7 @@ class AreaDashboardState extends State<AreaDashboard> {
   initState() {
     super.initState();
     userArea();
+    checkCallLog();
 
 
   }

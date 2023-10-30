@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:field_app/area/customer_visit.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:call_log/call_log.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';

@@ -107,6 +107,7 @@ class CProfileState extends State<CProfile> {
       setState(() {
         role = prefs.getString("role")!;
         area = prefs.getString("area")!;
+        print("user $area");
         name = prefs.getString("name")!;
         region = prefs.getString("region")!;
         country = prefs.getString("country")!;
@@ -162,11 +163,16 @@ class CProfileState extends State<CProfile> {
           .where((task) => task['Area'] == area && task['Angaza ID'] == account
       ).toList();
 
+
       setState(() {
         _data = filteredTasks;
         data = results;
         isLoading = true;
       });
+      print(_data);
+      print(data);
+      print(area);
+      print( account);
     } on StorageException catch (e) {
       safePrint('Could not retrieve properties: ${e.message}');
       rethrow;
@@ -291,6 +297,7 @@ class CProfileState extends State<CProfile> {
   void initState() {
 
     super.initState();
+    userArea();
     listItems("ACE_Data", widget.angaza);
   }
   getPhoto(String client) async {

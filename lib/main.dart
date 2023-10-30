@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:amplify_storage_s3/amplify_storage_s3.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:call_log/call_log.dart';
 import 'package:field_app/services/db.dart';
 import 'package:field_app/utils/themes/theme.dart';
 import 'package:field_app/widget/drop_down.dart';
@@ -124,6 +126,7 @@ class _MyAppState extends State<MyApp> {
     }
   }
   bool servicestatus = false;
+  bool calllog = false;
   bool haspermission = false;
   bool islogin = false;
   late LocationPermission permission;
@@ -144,12 +147,14 @@ class _MyAppState extends State<MyApp> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
+          permission = await Geolocator.requestPermission();
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Location permissions are denied'),
             ),
           );
         }else if(permission == LocationPermission.deniedForever){
+          permission = await Geolocator.requestPermission();
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Location permissions are permanently denied'),
@@ -174,11 +179,18 @@ class _MyAppState extends State<MyApp> {
       //refresh the UI
     });*/
   }
+  List<Permission> statuses = [
+
+    Permission.camera,
+    Permission.phone,
+    Permission.storage,
+  ];
+
   void initState() {
     checkGps();
-
     super.initState();
     getUserAuth();
+    //checkCallLog();
     listItems("ace_data");
 
   }

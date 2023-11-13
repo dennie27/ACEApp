@@ -1,72 +1,94 @@
 {
-  "api": {
-    "fieldapprest": {
+  "auth": {
+    "acedata": {
+      "customAuth": false,
       "dependsOn": [
         {
           "attributes": [
-            "Name",
-            "Arn"
+            "Arn",
+            "Name"
           ],
           "category": "function",
-          "resourceName": "fieldapp606ae50c"
+          "resourceName": "acedataPostConfirmation",
+          "triggerProvider": "Cognito"
         }
       ],
-      "providerPlugin": "awscloudformation",
-      "service": "API Gateway"
-    }
-  },
-  "auth": {
-    "fieldapp": {
-      "customAuth": false,
-      "dependsOn": [],
       "frontendAuthConfig": {
         "mfaConfiguration": "OFF",
         "mfaTypes": [
           "SMS"
         ],
         "passwordProtectionSettings": {
-          "passwordPolicyCharacters": [
-            "REQUIRES_LOWERCASE",
-            "REQUIRES_NUMBERS",
-            "REQUIRES_SYMBOLS",
-            "REQUIRES_UPPERCASE"
-          ],
+          "passwordPolicyCharacters": [],
           "passwordPolicyMinLength": 8
         },
-        "signupAttributes": [],
-        "socialProviders": [
-          "GOOGLE"
+        "signupAttributes": [
+          "EMAIL",
+          "MIDDLE_NAME",
+          "NAME",
+          "PHONE_NUMBER"
         ],
-        "usernameAttributes": [
-          "EMAIL"
-        ],
+        "socialProviders": [],
+        "usernameAttributes": [],
         "verificationMechanisms": [
-          "EMAIL"
+          "PHONE_NUMBER"
         ]
       },
       "providerPlugin": "awscloudformation",
       "service": "Cognito"
+    },
+    "userPoolGroups": {
+      "dependsOn": [
+        {
+          "attributes": [
+            "UserPoolId",
+            "AppClientIDWeb",
+            "AppClientID",
+            "IdentityPoolId"
+          ],
+          "category": "auth",
+          "resourceName": "acedata"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "Cognito-UserPool-Groups"
     }
   },
   "function": {
-    "fieldapp606ae50c": {
+    "acedataPostConfirmation": {
       "build": true,
       "providerPlugin": "awscloudformation",
       "service": "Lambda"
     }
   },
+  "parameters": {
+    "AMPLIFY_function_acedataPostConfirmation_GROUP": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "acedataPostConfirmation"
+        }
+      ]
+    },
+    "AMPLIFY_function_acedataPostConfirmation_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "acedataPostConfirmation"
+        }
+      ]
+    },
+    "AMPLIFY_function_acedataPostConfirmation_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "acedataPostConfirmation"
+        }
+      ]
+    }
+  },
   "storage": {
-    "fieldappbb721590": {
-      "dependsOn": [],
-      "providerPlugin": "awscloudformation",
-      "service": "S3",
-      "serviceType": "imported"
-    },
-    "fieldappdata": {
-      "providerPlugin": "awscloudformation",
-      "service": "DynamoDB"
-    },
-    "fieldstorage": {
+    "aceapp": {
       "dependsOn": [],
       "providerPlugin": "awscloudformation",
       "service": "S3"

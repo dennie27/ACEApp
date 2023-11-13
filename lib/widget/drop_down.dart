@@ -37,6 +37,8 @@ class _AppDropDownState extends State<AppDropDown>{
           child: Text(items),
         );
       }).toList(),
+    style: TextStyle(
+    color: Colors.black,),
 
       onChanged:(String? value) {
         setState(() {

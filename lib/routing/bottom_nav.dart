@@ -2,23 +2,18 @@
 
 import 'dart:convert';
 import 'dart:io';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:field_app/area/dashboard.dart';
-import 'package:field_app/services/user_detail.dart';
-import 'package:googleapis_auth/auth_io.dart';
-import 'package:googleapis_auth/googleapis_auth.dart';
-import 'package:googleapis/fcm/v1.dart' as fcm;
-import 'package:field_app/services/auth_services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart'as http;
 import '../area/acl_task.dart';
+import '../area/restricted_agent.dart';
 import 'appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import '../../utils/themes/theme.dart';
-import '../../task.dart';
-import '../../dashboard.dart';
 
 class NavPage extends StatefulWidget{
   @override
@@ -123,6 +118,7 @@ class NavPagePageState extends State<NavPage> {
 
     AreaDashboard(),
     Customer(),
+    RestrictedTask()
   ];
   @override
   Widget build(BuildContext context) {
@@ -161,12 +157,16 @@ class NavPagePageState extends State<NavPage> {
                   text: 'Home',
                 ),*/
                 GButton(
-                  icon: Icons.task,
-                  text: 'task',
+                  icon: Icons.home,
+                  text: 'Dashboard',
                 ),
                   GButton(
                   icon: Icons.phone,
-                  text: 'Customer',
+                  text: 'Task',
+                ),
+                GButton(
+                  icon: Icons.people,
+                  text: 'Agent',
                 ),
               ],
               onTabChange: (index){

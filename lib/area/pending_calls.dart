@@ -1,18 +1,14 @@
-// main.dart
 import 'dart:convert';
-import 'package:field_app/utils/themes/theme.dart';
-import 'package:http/http.dart' as http;
-import 'package:field_app/area/customer_vist.dart';
-import 'package:field_app/services/calls_detail.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:field_app/services/user_detail.dart';
+import 'package:field_app/area/customer_visit.dart';
 import 'package:call_log/call_log.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/db.dart';
 import '../widget/drop_down.dart';
 import 'customer_profile.dart';
 
@@ -26,28 +22,6 @@ class PendingCalls extends StatefulWidget {
 class PendingCallsState extends State<PendingCalls> {
   String _searchText = '';
   bool visit = false;
-  getPhoto(String client) async {
-    String username = 'dennis+angaza@greenlightplanet.com';
-    String password = 'sunking';
-    String basicAuth =
-        'Basic ${base64.encode(utf8.encode('$username:$password'))}';
-    var headers = {
-      "Accept": "application/json",
-      "method": "GET",
-      "Authorization": '${basicAuth}',
-      "account_qid": "AC5156322",
-    };
-    var uri = Uri.parse('https://payg.angazadesign.com/data/clients/$client');
-    var response = await http.get(uri, headers: headers);
-    var body = json.decode(response.body);
-    var attribute = body["attribute_values"];
-    List<Map<String, dynamic>> attributes =
-        attribute.cast<Map<String, dynamic>>();
-    String photo = attributes
-        .firstWhere((attr) => attr['name'] == 'Client Photo')['value'];
-    return photo;
-  }
-
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   var currentUser = FirebaseAuth.instance.currentUser;
   var fnumberupdate;
@@ -61,37 +35,50 @@ class PendingCallsState extends State<PendingCalls> {
   var simnameupdate;
   String? Status;
   String? Area;
-  void userArea() {
-    UserDetail().getUserArea().then((value) {
+  bool isLogin = true;
+  String name = "";
+  String region = '';
+  String country = '';
+  List? data = [];
+  List? _data = [];
+  String role = '';
+  String area = '';
+  bool isLoading = true;
+  void userArea() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var login = prefs.get("isLogin");
+    var task = prefs.get("filteredTasks");
+    if (login == true) {
       setState(() {
-        Area = value;
+        role = prefs.getString("role")!;
+        name = prefs.getString("name")!;
+        region = prefs.getString("region")!;
+        country = prefs.getString("country")!;
       });
-    });
+    }
   }
 
   String _searchQuery = '';
-  List<DocumentSnapshot> _data = [];
-  Future<void> _getDocuments() async {
-    QuerySnapshot querySnapshot = await firestore
-        .collection("new_calling")
-        .where("Area", isEqualTo: await UserDetail().getUserArea())
-        .where('Status', isNotEqualTo: 'Complete')
-        .get();
-    setState(() {
-      _data = querySnapshot.docs;
-    });
-  }
+  Future<void> ACETask() async {
+    var connection = await Database.connect();
+    var results = await connection.query("SELECT angaza_id FROM feedback");
+    var uniqueAngazaIds = <String>{};
+    for (var row in results) {
+      uniqueAngazaIds.add(row[0] as String);
+    }
 
-  Future<void> _getFilterdata(String Task) async {
-    QuerySnapshot querySnapshot = await firestore
-        .collection("new_calling")
-        .where("Area", isEqualTo: await UserDetail().getUserArea())
-        .where('Status', isNotEqualTo: 'Complete')
-        .where('Task', isEqualTo: Task)
-        .get();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final data = prefs.getString('filteredTasks') ?? '[]';
+    var area = prefs.getString('area');
+    var dataList = jsonDecode(data);
+    var filteredTasks = dataList.where((task) => task['Area'] == area ).toList();
+    var postList = uniqueAngazaIds.toSet();
+    filteredTasks
+        .removeWhere((element) => postList.contains(element["Angaza ID"]));
+
     setState(() {
-      _data = querySnapshot.docs;
-      visit = false;
+      _data = filteredTasks;
+      isLoading = false;
     });
   }
 
@@ -101,9 +88,9 @@ class PendingCallsState extends State<PendingCalls> {
     return (to.difference(from).inHours / 24).round();
   }
 
-  void callLogs(String docid, String feedback, String angaza) async {
-    String _docid = docid;
-
+  void callLogs(String feedback, String angaza, String reason) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? name = prefs.getString('name');
     Iterable<CallLogEntry> entries = await CallLog.get();
     fnumberupdate = entries.elementAt(0).formattedNumber;
     cmnumberupdate = entries.elementAt(0).cachedMatchedNumber;
@@ -115,39 +102,24 @@ class PendingCallsState extends State<PendingCalls> {
     accidupdate = entries.elementAt(0).phoneAccountId;
     simnameupdate = entries.elementAt(0).simDisplayName;
 
-    if (duration1update >= 30) {
-      CollectionReference newCalling = firestore.collection("new_calling");
-      await newCalling.doc(_docid).update({
-        'Duration': duration1update,
-        'ACE Name': currentUser?.displayName,
-        "User UID": currentUser?.uid,
-        "date": DateFormat('yyyy-MM-dd kk:mm').format(DateTime.now()),
-        "Task Type": "Call",
-        "Status": "Complete",
-        "Promise date": dateInputController.text,
-      });
-      CollectionReference feedBack = firestore.collection("FeedBack");
-      await feedBack.add({
-        "Angaza ID": angaza,
-        "Duration": duration1update,
-        "User UID": currentUser?.uid,
-        "date": DateFormat('yyyy-MM-dd kk:mm').format(DateTime.now()),
-        "Task Type": "Call",
-        "Status": "Complete",
-        "Promise date": DateFormat('yyyy-MM-dd')
-            .format(dateInputController.text as DateTime),
-        "Feedback": feedback
-      });
-
+    if (duration1update >= 0) {
+      var connection = await Database.connect();
+      var date = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      var col =
+          '"angaza_id", "duration", "user", "date", "task", "status", "promise_date", "feedback","reason"';
+      var value =
+          "'$angaza','$duration1update','$name','$date','Call','Complete','$date','$feedback','$reason'";
+      var result =
+          await connection.query("INSERT INTO feedback ($col) VALUES ($value)");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Your call has been record successfull'),
         ),
       );
       return Navigator.of(context, rootNavigator: true).pop();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
               'the call was not recorded as its not meet required duretion'),
         ),
@@ -155,8 +127,8 @@ class PendingCallsState extends State<PendingCalls> {
       return Navigator.of(context, rootNavigator: true).pop();
     }
   }
-
   String? feedbackselected;
+  String? phoneselected;
   var feedback = [
     'Customer will pay',
     'System will be repossessed',
@@ -164,7 +136,6 @@ class PendingCallsState extends State<PendingCalls> {
     'Product is with EO',
     'Not the owner',
   ];
-  String? phoneselected;
 
   TextEditingController feedbackController = TextEditingController();
   TextEditingController dateInputController = TextEditingController();
@@ -174,15 +145,13 @@ class PendingCallsState extends State<PendingCalls> {
     phone = phone.toSet().toList();
     String txt = feedbackController.text;
     String datetxt = dateInputController.text.toString();
-
-    String _docid = docid;
     showDialog(
         context: context,
         builder: (BuildContext context) {
           return SingleChildScrollView(
             child: AlertDialog(
-                title: Text('Customer Feedback'),
-                content: Container(
+                title: const Text('Customer Feedback'),
+                content: SizedBox(
                     height: 500,
                     child: Form(
                       key: _formKey,
@@ -199,7 +168,7 @@ class PendingCallsState extends State<PendingCalls> {
                               await FlutterPhoneDirectCaller.callNumber(
                                   phoneselected!);
                             }),
-                        SizedBox(
+                        const SizedBox(
                           height: 10,
                         ),
                         DropdownButtonFormField(
@@ -213,7 +182,7 @@ class PendingCallsState extends State<PendingCalls> {
                             decoration: InputDecoration(
                               filled: true,
                               labelText: "feedback",
-                              border: OutlineInputBorder(),
+                              border: const OutlineInputBorder(),
                               hintStyle: TextStyle(color: Colors.grey[800]),
                               hintText: "Name",
                             ),
@@ -244,11 +213,11 @@ class PendingCallsState extends State<PendingCalls> {
                             return null;
                           },
                           controller: feedbackController,
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             labelText: 'Additional Feedback',
                           ),
                         ),
-                        SizedBox(
+                        const SizedBox(
                           height: 10,
                         ),
                         TextFormField(
@@ -256,13 +225,13 @@ class PendingCallsState extends State<PendingCalls> {
                             hintText: 'Date',
                             border: OutlineInputBorder(
                                 borderSide:
-                                    BorderSide(color: Colors.blue, width: 1)),
+                                    BorderSide(color: Colors.black, width: 1)),
                             focusedBorder: OutlineInputBorder(
                                 borderSide:
-                                    BorderSide(color: Colors.blue, width: 1)),
+                                    BorderSide(color: Colors.black, width: 1)),
                             enabledBorder: OutlineInputBorder(
                                 borderSide:
-                                    BorderSide(color: Colors.blue, width: 1)),
+                                    BorderSide(color: Colors.black, width: 1)),
                           ),
                           controller: dateInputController,
                           readOnly: true,
@@ -271,15 +240,15 @@ class PendingCallsState extends State<PendingCalls> {
                                 context: context,
                                 initialDate: DateTime.now(),
                                 firstDate: DateTime.now(),
-                                lastDate:
-                                    DateTime.now().add(Duration(days: 5)));
+                                lastDate: DateTime.now()
+                                    .add(const Duration(days: 5)));
 
                             if (pickedDate != null) {
                               dateInputController.text = pickedDate.toString();
                             }
                           },
                         ),
-                        SizedBox(
+                        const SizedBox(
                           height: 20,
                         ),
                         Row(
@@ -289,25 +258,25 @@ class PendingCallsState extends State<PendingCalls> {
                                 onPressed: () {
                                   Navigator.of(context).pop();
                                 },
-                                child: Text('Cancel'),
+                                child: const Text('Cancel'),
                               ),
                               ElevatedButton(
                                 onPressed: () {
                                   if (_formKey.currentState!.validate() &&
                                       phoneselected != null &&
                                       dateInputController.text != null) {
-                                    callLogs(_docid, feedbackController.text,
-                                        angaza);
+                                    callLogs( feedbackController.text,
+                                        angaza, feedbackselected!);
                                   } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
+                                      const SnackBar(
                                         content:
                                             Text("Please fill all the detail"),
                                       ),
                                     );
                                   }
                                 },
-                                child: Text('Submit'),
+                                child: const Text('Submit'),
                               ),
                             ])
                       ]),
@@ -321,11 +290,10 @@ class PendingCallsState extends State<PendingCalls> {
   // This list holds the data for the list view
 
   @override
-  initState() {
-    // at the beginning, all users are shown
-    userArea();
-    _getDocuments();
+  void initState() {
     super.initState();
+    userArea();
+    ACETask();
   }
 
   @override
@@ -350,28 +318,32 @@ class PendingCallsState extends State<PendingCalls> {
               onSelected: (value) {
                 switch (value) {
                   case 'All':
-                    _getDocuments();
-                    print(value);
                     break;
                   case 'Call':
-                    print(value);
-                    _getFilterdata('Call');
                     break;
                   case 'Disabled':
-                    print(value);
-                    _getFilterdata('Disable');
                     break;
                   case 'Visit':
-                    print(value);
-                    _getFilterdata('Visit');
                     break;
                 }
               },
               itemBuilder: (context) => [
-                const PopupMenuItem(child: Text("All"), value: "All"),
-                const PopupMenuItem(child: Text("Call"), value: "Call"),
-                const PopupMenuItem(child: Text("Disabled"), value: "Disabled"),
-                const PopupMenuItem(child: Text("Visit"), value: "Visit"),
+                const PopupMenuItem(
+                  value: "All",
+                  child: Text("All"),
+                ),
+                const PopupMenuItem(
+                  value: "Call",
+                  child: Text("Call"),
+                ),
+                const PopupMenuItem(
+                  value: "Disabled",
+                  child: Text("Disabled"),
+                ),
+                const PopupMenuItem(
+                  value: "Visit",
+                  child: Text("Visit"),
+                ),
               ],
               icon: const Icon(Icons.filter_list_alt, color: Colors.yellow),
             ),
@@ -392,26 +364,23 @@ class PendingCallsState extends State<PendingCalls> {
           height: 10,
         ),
         Expanded(
-          child: _data.length > 0
+          child: _data!.isNotEmpty
               ? ListView.separated(
-                  itemCount: _data.length,
+                  itemCount: _data!.length,
                   itemBuilder: (context, index) {
-                    DocumentSnapshot data = _data[index];
-                    String phoneList = '${data["Customer Phone Number"]},' +
-                        '${data["Phone Number 1"].toString()},' +
-                        '${data["Phone Number 2"].toString()},' +
-                        '${data["Phone Number 3"].toString()},' +
-                        '${data["Phone Number 4"].toString()},';
+                    var data = _data![index];
+                    String phoneList =
+                        '${data["Customer Phone Number"]},${data["Phone Number 1"].toString()},${data["Phone Number 2"].toString()},${data["Phone Number 3"].toString()},${data["Phone Number 4"].toString()},';
                     if (data["Task"] == 'Visit') {
                       visit = true;
                     } else {
                       visit = false;
                     }
                     if (_searchQuery.isNotEmpty &&
-                        !_data[index]['Customer Name']
+                        !_data![index]['Customer Name']
                             .toLowerCase()
                             .contains(_searchQuery.toLowerCase())) {
-                      return SizedBox();
+                      return const SizedBox();
                     }
                     return InkWell(
                       onTap: () {
@@ -419,12 +388,12 @@ class PendingCallsState extends State<PendingCalls> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => CProfile(
-                                id: data.id,
+                                id: data['Angaza ID'],
                                 angaza: data['Angaza ID'],
                               ),
                             ));
                       },
-                      key: ValueKey(_data[index]),
+                      key: ValueKey(_data![index]),
                       child: Card(
                         elevation: 8,
                         child: Padding(
@@ -434,10 +403,10 @@ class PendingCallsState extends State<PendingCalls> {
                             children: [
                               Row(
                                 children: [
-                                  Column(
+                                  const Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
-                                    children: const [
+                                    children: [
                                       Text(
                                         "Name:",
                                         style: TextStyle(
@@ -465,18 +434,17 @@ class PendingCallsState extends State<PendingCalls> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text("${data['Customer Name']}",
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             fontSize: 13,
                                             color: Colors.black,
                                           )),
-                                      Text(
-                                          "${data['Account Number'].toString()}",
-                                          style: TextStyle(
+                                      Text(data['Account Number'].toString(),
+                                          style: const TextStyle(
                                             fontSize: 13,
                                             color: Colors.black,
                                           )),
                                       Text("${data['Product Name']}",
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             fontSize: 13,
                                             color: Colors.black,
                                           )),
@@ -489,34 +457,51 @@ class PendingCallsState extends State<PendingCalls> {
                                 children: [
                                   visit
                                       ? IconButton(
-                                          padding: new EdgeInsets.all(0.0),
+                                          padding: const EdgeInsets.all(0.0),
                                           onPressed: () {},
                                           icon: Transform.rotate(
                                               angle: 90,
-                                              child: Icon(Icons.phone_disabled,
+                                              child: const Icon(
+                                                  Icons.phone_disabled,
                                                   size: 20.0)))
                                       : IconButton(
-                                          padding: new EdgeInsets.all(0.0),
+                                          padding: const EdgeInsets.all(0.0),
                                           onPressed: () {
-                                            _callNumber(phoneList, data.id,
+                                            _callNumber(
+                                                phoneList,
+                                                data["Angaza ID"],
                                                 data["Angaza ID"]);
+
+                                            /* _callNumber(phoneList, data["Angaza ID"],
+                                                data["Angaza ID"]);*/
                                           },
-                                          icon: Icon(Icons.phone, size: 20.0)),
-                                  IconButton(
-                                      padding: new EdgeInsets.all(0.0),
-                                      onPressed: () {
-                                        Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  CustomerVisit(
-                                                id: data.id,
-                                                angaza: data["Angaza ID"],
-                                              ),
-                                            ));
-                                      },
-                                      icon: Icon(Icons.location_on_outlined,
-                                          size: 20.0))
+                                          icon: const Icon(Icons.phone,
+                                              size: 20.0)),
+                                  if (data['Location Latitudelongitude'] ==
+                                          null ||
+                                      data['Location Latitudelongitude'] == "")
+                                    IconButton(
+                                        padding: const EdgeInsets.all(0.0),
+                                        onPressed: () {},
+                                        icon: const Icon(Icons.location_off,
+                                            size: 20.0)),
+                                  if (data['Location Latitudelongitude'] != "")
+                                    IconButton(
+                                        padding: const EdgeInsets.all(0.0),
+                                        onPressed: () {
+                                          Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    CustomerVisit(
+                                                  id: data["Angaza ID"],
+                                                  angaza: data["Angaza ID"],
+                                                ),
+                                              ));
+                                        },
+                                        icon: const Icon(
+                                            Icons.location_on_outlined,
+                                            size: 20.0))
                                 ],
                               )
                             ],
@@ -524,7 +509,6 @@ class PendingCallsState extends State<PendingCalls> {
                         ),
                       ),
                     );
-                    ;
                   },
                   separatorBuilder: (BuildContext context, int index) =>
                       const Divider(),

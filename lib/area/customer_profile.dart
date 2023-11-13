@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:amplify_flutter/amplify_flutter.dart';
+import 'package:amplify_storage_s3/amplify_storage_s3.dart';
 import 'package:call_log/call_log.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -7,9 +9,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/db.dart';
 import '../widget/drop_down.dart';
-import 'customer_vist.dart';
+import 'customer_visit.dart';
 
 class CProfile extends StatefulWidget {
   final String id;
@@ -72,8 +76,8 @@ class CProfileState extends State<CProfile> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Your call has been record successfull'),
+        const SnackBar(
+          content: Text('Your call has been record successful'),
         ),
       );
       return Navigator.of(context, rootNavigator: true).pop();
@@ -89,6 +93,91 @@ class CProfileState extends State<CProfile> {
 
     }
   }
+  String role = '';
+  String area = '';
+  String name ="";
+  String region = '';
+  String country ='';
+  List? data = [];
+  List? _data = [];
+  void userArea() async{
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var login  = prefs.get("isLogin");
+    if(login == true){
+      setState(() {
+        role = prefs.getString("role")!;
+        area = prefs.getString("area")!;
+        print("user $area");
+        name = prefs.getString("name")!;
+        region = prefs.getString("region")!;
+        country = prefs.getString("country")!;
+      });
+    }
+  }
+  Future<StorageItem?> listItems(key,account) async {
+    try {
+      StorageListOperation<StorageListRequest, StorageListResult<StorageItem>>
+      operation = await Amplify.Storage.list(
+        options: const StorageListOptions(
+          accessLevel: StorageAccessLevel.guest,
+          pluginOptions: S3ListPluginOptions.listAll(),
+
+        ),
+      );
+
+      Future<StorageListResult<StorageItem>> result = operation.result;
+      List<StorageItem> resultList = (await operation.result).items;
+      resultList = resultList.where((file) => file.key.contains(key)).toList();
+      if (resultList.isNotEmpty) {
+        // Sort the files by the last modified timestamp in descending order
+        resultList.sort((a, b) => b.lastModified!.compareTo(a.lastModified!));
+        StorageItem latestFile = resultList.first;
+        ACETask(latestFile.key,account);
+
+        return resultList.first;
+      } else {
+
+        return null;
+      }
+    } on StorageException catch (e) {
+      safePrint('Error listing items: $e');
+    }
+  }
+  Future<void> ACETask(key,account) async {
+    var connection = await Database.connect();
+    var results = await connection.query("SELECT * FROM feedback WHERE angaza_id = @angaza_id",
+       substitutionValues: {"angaza_id":account});
+    List<String> uniquearea = [];
+
+
+
+    try {
+
+      StorageGetUrlResult urlResult = await Amplify.Storage.getUrl(
+          key: key)
+          .result;
+      final response = await http.get(urlResult.url);
+      final jsonData = jsonDecode(response.body);
+
+      final List<dynamic> filteredTasks = jsonData
+          .where((task) => task['Area'] == area && task['Angaza ID'] == account
+      ).toList();
+
+
+      setState(() {
+        _data = filteredTasks;
+        data = results;
+        isLoading = true;
+      });
+      print(_data);
+      print(data);
+      print(area);
+      print( account);
+    } on StorageException catch (e) {
+      safePrint('Could not retrieve properties: ${e.message}');
+      rethrow;
+    }
+  }
   String? feedbackselected;
   var feedback = [
     'Customer will pay',
@@ -98,6 +187,7 @@ class CProfileState extends State<CProfile> {
     'not the owner',
   ];
   String? phoneselected;
+  bool  isLoading = false;
   TextEditingController feedbackController = TextEditingController();
   TextEditingController dateInputController = TextEditingController();
   _callNumber(String phoneNumber, String docid,String angaza) async {
@@ -111,8 +201,8 @@ class CProfileState extends State<CProfile> {
         builder: (BuildContext context) {
           return SingleChildScrollView(
             child: AlertDialog(
-                title: Text('Customer Feedback'),
-                content: Container(
+                title: const Text('Customer Feedback'),
+                content: SizedBox(
                     height: 400,
                     child: Column(children: <Widget>[
                       AppDropDown(
@@ -126,13 +216,13 @@ class CProfileState extends State<CProfile> {
                             });
                             await FlutterPhoneDirectCaller.callNumber(phoneselected!);
                           }),
-                      SizedBox(height: 10,),
+                      const SizedBox(height: 10,),
                       DropdownButtonFormField(
                           isExpanded: true,
                           decoration: InputDecoration(
                             filled: true,
                             labelText: "feedback",
-                            border: OutlineInputBorder(),
+                            border: const OutlineInputBorder(),
                             hintStyle: TextStyle(color: Colors.grey[800]),
                             hintText: "Name",
                           ),
@@ -150,11 +240,11 @@ class CProfileState extends State<CProfile> {
                       TextField(
                         maxLines: 4,
                         controller: feedbackController,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Additional Feedback',
                         ),
                       ),
-                      SizedBox(height: 10,),
+                      const SizedBox(height: 10,),
                       TextFormField(
                         decoration: const InputDecoration(
                           hintText: 'Date',
@@ -172,14 +262,14 @@ class CProfileState extends State<CProfile> {
                               context: context,
                               initialDate: DateTime.now(),
                               firstDate: DateTime.now(),
-                              lastDate: DateTime.now().add(Duration(days: 5)));
+                              lastDate: DateTime.now().add(const Duration(days: 5)));
 
                           if (pickedDate != null) {
                             dateInputController.text =pickedDate.toString();
                           }
                         },
                       ),
-                      SizedBox(
+                      const SizedBox(
                         height: 20,
                       ),
                       Row(
@@ -189,13 +279,13 @@ class CProfileState extends State<CProfile> {
                               onPressed: () {
                                 Navigator.of(context).pop();
                               },
-                              child: Text('Cancel'),
+                              child: const Text('Cancel'),
                             ),
                             ElevatedButton(
                               onPressed: () {
                                 callLogs(_docid,feedbackController.text,angaza);
                               },
-                              child: Text('Submit'),
+                              child:const  Text('Submit'),
                             ),
                           ])
                     ]))),
@@ -205,8 +295,10 @@ class CProfileState extends State<CProfile> {
 
 
   void initState() {
-    print(widget.id);
+
     super.initState();
+    userArea();
+    listItems("ACE_Data", widget.angaza);
   }
   getPhoto(String client) async {
 
@@ -217,7 +309,7 @@ class CProfileState extends State<CProfile> {
     var headers = {
       "Accept": "application/json",
       "method": "GET",
-      "Authorization": '${basicAuth}',
+      "Authorization": basicAuth,
       "account_qid": "AC5156322",
     };
     var uri = Uri.parse('https://payg.angazadesign.com/data/clients/$client');
@@ -230,7 +322,7 @@ class CProfileState extends State<CProfile> {
         .firstWhere((attr) => attr['name'] == 'Client Photo')['value'];
     return photo;
   }
-  var dennis ='';
+
   getAccountData(String angazaid) async {
 
     String username = 'dennis+angaza@greenlightplanet.com';
@@ -240,7 +332,7 @@ class CProfileState extends State<CProfile> {
     var headers = {
       "Accept": "application/json",
       "method":"GET",
-      "Authorization": '${basicAuth}',
+      "Authorization": basicAuth,
       "account_qid" : "AC5156322",
     };
     var uri = Uri.parse('https://payg.angazadesign.com/data/accounts/$angazaid');
@@ -271,291 +363,259 @@ class CProfileState extends State<CProfile> {
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
-      body: SingleChildScrollView(
-        child:Column(
-          children: [
-            Center(
-                child: FutureBuilder<dynamic>(
-                    future: getAccountData(widget.angaza),
-                    builder: (BuildContext context,
-                        AsyncSnapshot<dynamic> photourl) {
-                      if (photourl.hasData) {
-                        String photo = photourl.data!;
-                        return Container(
-                          margin: EdgeInsets.fromLTRB(0, 20, 0, 0),
-                          width: 150.0,
-                          height: 150.0,
-                          color: Colors.grey.withOpacity(0.3),
-                          child:  Center(child: Image.network(photo)),
-                        );
-                      } else if (photourl.hasError) {
-                        return
-                            Container(
-                              margin: EdgeInsets.fromLTRB(0, 20, 0, 0),
-                              width: 150.0,
-                              height: 150.0,
-                              color: Colors.grey.withOpacity(0.3),
-                              child:  Center(child:Icon(Icons.person)),
-                            )
-                        ;
-                      } else {
-                        return CircularProgressIndicator();
-                      }
-                    })),
-            StreamBuilder(
-              stream: firestore.collection("new_calling").doc(widget.id).snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  DocumentSnapshot data = snapshot.data!;
-                  String phoneList =
-                      '${data["Customer Phone Number"]},'+
-                          '${data["Phone Number 1"].toString()},'+
-                          '${data["Phone Number 2"].toString()},'+
-                          '${data["Phone Number 3"].toString()},'+
-                          '${data["Phone Number 4"].toString()},'
-                  ;
-                  var agentname = data['Responsible User'].split('(');
-                  var date = data['Registration Date'];
-                  return Column(
-
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Name:',
-                                  style: const TextStyle(fontSize: 20,fontWeight: FontWeight.bold)),
-                              Text('Account:',
-                                  style: const TextStyle(fontSize: 20,fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('${data['Customer Name']}',
-                                  style: const TextStyle(fontSize: 20)),
-                              Text(' ${data['Account Number']}',
-                                  style: const TextStyle(fontSize: 20)),
-                            ],
-                          )
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          TextButton(
-                            onPressed: () {
-                              _callNumber(
-                                  phoneList,
-                                  data.id,
-                                  data["Angaza ID"]
+        appBar: AppBar(),
+        body: SingleChildScrollView(
+            child:isLoading? Column(
+                children: [
+                  Center(
+                      child: FutureBuilder<dynamic>(
+                          future: getAccountData(widget.angaza),
+                          builder: (BuildContext context,
+                              AsyncSnapshot<dynamic> photourl) {
+                            if (photourl.hasData) {
+                              String photo = photourl.data!;
+                              return Container(
+                                margin:const  EdgeInsets.fromLTRB(0, 20, 0, 0),
+                                width: 150.0,
+                                height: 150.0,
+                                color: Colors.grey.withOpacity(0.3),
+                                child: Center(child: Image.network(photo)),
                               );
-                            },
-                            child: Text(
-                              data['Customer Phone Number'],
-                              style: const TextStyle(
-                                  fontSize: 20, color: Colors.black),
-                            ),
-                          ),
-                          TextButton(
-                              onPressed: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          CustomerVisit(id: data.id,
-                                            angaza: data["Angaza ID"],
-                                          ),
-                                    ));
-                              },
-                              child: Text(data['Area'].toString(),
-                                  style: const TextStyle(
-                                      fontSize: 20, color: Colors.black))),
-                        ],
-                      ),
-                      const Card(
-                        shadowColor: Colors.amber,
-                        color: Colors.black,
-                        child: ListTile(
-                          title: Center(
-                              child: Text("Account Detail",
-                                  style: TextStyle(
-                                      fontSize: 15, color: Colors.yellow))),
-                          dense: true,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            } else if (photourl.hasError) {
+                              return
+                                Container(
+                                  margin: const EdgeInsets.fromLTRB(0, 20, 0, 0),
+                                  width: 150.0,
+                                  height: 150.0,
+                                  color: Colors.grey.withOpacity(0.3),
+                                  child: const Center(child: Icon(Icons.person)),
+                                )
+                              ;
+                            } else {
+                              return const CircularProgressIndicator();
+                            }
+                          })),
+                        Column(
+
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Agent Name: ',
-                                    style: const TextStyle(fontSize: 15,fontWeight: FontWeight.bold)),
-                                Text(
-                                  'Agent Username: ',
-                                  style: const TextStyle(fontSize: 15,fontWeight: FontWeight.bold),
-                                ),
-                                Text(
-                                  'Registration Date: ',
-                                  style: const TextStyle(fontSize: 15,fontWeight: FontWeight.bold),
-                                ),
-                                Text(
-                                  'Product Name: ',
-                                  style: const TextStyle(fontSize: 15,fontWeight: FontWeight.bold),
-                                ),
-                                Text(
-                                  'Is FPD: ',
-                                  style: const TextStyle(fontSize: 15,fontWeight: FontWeight.bold),
-                                ),
-                                Text('Amount to Collect: ',
-                                  style: const TextStyle(fontSize: 15,fontWeight: FontWeight.bold),),
-                                Text('Amount Collected: ',
-                                  style: const TextStyle(fontSize: 15,fontWeight: FontWeight.bold),),
 
-                                Text('Promise date: ',
-                                    style: const TextStyle(fontSize: 15,fontWeight: FontWeight.bold)),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Name:',
+                                        style: TextStyle(fontSize: 20,
+                                            fontWeight: FontWeight.bold)),
+                                    Text('Account:',
+                                        style: TextStyle(fontSize: 20,
+                                            fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(_data![0]['Customer Name'],
+                                        style: const TextStyle(fontSize: 20)),
+                                    Text(_data![0]['Account Number'],
+                                        style: const TextStyle(fontSize: 20)),
+                                  ],
+                                )
                               ],
                             ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
-                                Text(' ${agentname[0]}',
-                                    style: const TextStyle(fontSize: 15)),
-                                Text(
-                                  ' ${agentname[1].replaceAll(')', '')}',
-                                  style: const TextStyle(fontSize: 15),
+                                TextButton(
+                                  onPressed: () {
+                                    _callNumber(
+                                        "phoneList",
+                                       " data.id",
+                                        'data["Angaza ID"]'
+                                    );
+                                  },
+                                  child: Text(
+                                    _data![0]['Customer Phone Number'],
+                                    style: const TextStyle(
+                                        fontSize: 20, color: Colors.black),
+                                  ),
                                 ),
-                                Text(
-                                  ' ${DateTime.fromMillisecondsSinceEpoch(date.seconds*1000).toString().substring(0,10)}',
-                                  style: const TextStyle(fontSize: 15),
-                                ),
-
-                                Text(
-                                  ' ${data['Product Name']}',
-                                  style: const TextStyle(fontSize: 15),
-                                ),
-                                Text(
-                                  ' ${data['FPD']}',
-                                  style: const TextStyle(fontSize: 15),
-                                ),
-                                Text(' ${data['Amount to Collect']}',
-                                    style: const TextStyle(fontSize: 15)),
-                                Text(' ${data['Amount Collected']}',
-                                    style: const TextStyle(fontSize: 15)),
-
-                                Text(' ${data['Promise date']}',
-                                    style: const TextStyle(fontSize: 15)),
+                                TextButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                            const CustomerVisit(id: "id",
+                                                  angaza: "Angaza ID",
+                                                ),
+                                          ));
+                                    },
+                                    child: Text(_data![0]['Area'].toString(),
+                                        style: const TextStyle(
+                                            fontSize: 20,
+                                            color: Colors.black))),
                               ],
-                            )
+                            ),
+                            const Card(
+                              shadowColor: Colors.amber,
+                              color: Colors.black,
+                              child: ListTile(
+                                title: Center(
+                                    child: Text("Account Detail",
+                                        style: TextStyle(
+                                            fontSize: 15,
+                                            color: Colors.yellow))),
+                                dense: true,
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment
+                                    .spaceEvenly,
+                                children: [
+                                  const Column(
+                                    crossAxisAlignment: CrossAxisAlignment
+                                        .start,
+                                    children: [
+                                      Text('Agent Name: ',
+                                          style: TextStyle(fontSize: 15,
+                                              fontWeight: FontWeight.bold)),
+                                      Text(
+                                        'Agent Username: ',
+                                        style: TextStyle(fontSize: 15,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      Text(
+                                        'Registration Date: ',
+                                        style: TextStyle(fontSize: 15,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      Text(
+                                        'Product Name: ',
+                                        style: TextStyle(fontSize: 15,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      Text(
+                                        'Is FPD: ',
+                                        style: TextStyle(fontSize: 15,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      Text('Amount to Collect: ',
+                                        style: TextStyle(fontSize: 15,
+                                            fontWeight: FontWeight.bold),),
+                                      Text('Amount Collected: ',
+                                        style: TextStyle(fontSize: 15,
+                                            fontWeight: FontWeight.bold),),
+
+                                      Text('Promise date: ',
+                                          style: TextStyle(fontSize: 15,
+                                              fontWeight: FontWeight.bold)),
+                                    ],
+                                  ),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment
+                                        .start,
+                                    children: [
+                                      Text(_data![0]['Responsible User'].split('(')[0],
+                                          style: const TextStyle(fontSize: 15)),
+                                      Text(
+                                        _data![0]['Responsible User'].split('(')[1].replaceAll(')', ''),
+                                        style: const TextStyle(fontSize: 15),
+                                      ),
+                                      Text(
+                                          _data![0]['Date of Registration Date']
+                                      ),
+
+                                      const Text(
+                                        'Product Name',
+                                        style: TextStyle(fontSize: 15),
+                                      ),
+                                      Text(
+                                        _data![0]['Is First Pay Defaulted V2 (Yes / No)'],
+                                        style: const TextStyle(fontSize: 15),
+                                      ),
+                                      Text(_data![0]['Amount Payable to Exit Risk Permanently RT'],
+                                          style: const TextStyle(fontSize: 15)),
+                                      const  Text('Amount Collected',
+                                          style: TextStyle(fontSize: 15)),
+
+                                      const  Text('Promise date',
+                                          style: TextStyle(fontSize: 15)),
+                                    ],
+                                  )
+                                ],
+                              ),
+                            ),
+
+
+                            const SizedBox(
+                              height: 10,
+                            ),
+
                           ],
                         ),
-                      ),
-
-
-                      SizedBox(
-                        height: 10,
-                      ),
-
-                    ],
-                  );
-                } else if (snapshot.hasError) {
-                  return Column(
-                    children: const [
-                      CircularProgressIndicator(),
-                      Text("Error Loading data")
-                    ],
-                  );
-                } else {
-                  return Column(
-                    children: const [
-                      CircularProgressIndicator(),
-                      Text("Loading data...")
-                    ],
-                  );
-                }
-              },
-            ),
-            const Card(
-              shadowColor: Colors.amber,
-              color: Colors.black,
-              child: ListTile(
-                title: Center(
-                    child: Text("Call History",
-                        style: TextStyle(
-                            fontSize: 15, color: Colors.yellow))),
-                dense: true,
-              ),
-            ),
-            SizedBox(
-              height: 10,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                Text(
-                  "No.",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontStyle: FontStyle.italic,
+                  const Card(
+                    shadowColor: Colors.amber,
+                    color: Colors.black,
+                    child: ListTile(
+                      title: Center(
+                          child: Text("Call History",
+                              style: TextStyle(
+                                  fontSize: 15, color: Colors.yellow))),
+                      dense: true,
+                    ),
                   ),
-                ),
-                Text("Task Type",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontStyle: FontStyle.italic,
-                    )),
-                Text("Date Completed",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontStyle: FontStyle.italic,
-                    ))
-              ],
-            ),
-            Container(
-                height: 300,
-
-                child: FutureBuilder(
-                  future:firestore.collection("FeedBack").where('Angaza ID',isEqualTo: widget.angaza).get(),
-                  builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> feedbackdata) {
-                    print(feedbackdata);
-                    if(feedbackdata.hasData){
-                      return ListView.separated(
-                          itemCount: feedbackdata.data!.docs.length,
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  const Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Text(
+                        "No.",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                      Text("Task Type",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontStyle: FontStyle.italic,
+                          )),
+                      Text("Date Completed",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontStyle: FontStyle.italic,
+                          ))
+                    ],
+                  ),
+                  SizedBox(
+                      height: 300,
+                      child:
+                      ListView.separated(
+                          itemCount: data!.length,
                           separatorBuilder: (BuildContext context, int index) {
-                            return Divider();
+                            return const Divider();
                           },
                           itemBuilder: (BuildContext context, int index) {
                             return CustomFeedBack(
-                              serial: index+1,
-                              feedback:feedbackdata.data!.docs[index]["Feedback"],
-                              task:feedbackdata.data!.docs[index]["Task Type"],
-                              date:feedbackdata.data!.docs[index]["date"],
+                              serial: index + 1,
+                              feedback: data![0][3].toString(),
+                              task:data![0][8].toString(),
+                              date: data![0][10].toString().split(' ')[0],
 
                             );
-                          });
-                    }else{
-                      return Column(
-                        children: [
-                          Text("No record Found")
-                        ],
-                      );
-                    }
+                          })
+                  )
+                ]):const Center(child: CircularProgressIndicator(
 
-                  },)
-            )
-          ],
+            ),)
         )
-
-
-      ),
     );
   }
 }
@@ -569,10 +629,10 @@ class CustomFeedBack extends StatefulWidget {
   const CustomFeedBack({Key? key,required this.serial, required this.feedback,required this.task,required this.date}) : super(key: key);
 
   @override
-  _CustomFeedBackState createState() => _CustomFeedBackState();
+  CustomFeedBackState createState() => CustomFeedBackState();
 }
 
-class _CustomFeedBackState extends State<CustomFeedBack> {
+class CustomFeedBackState extends State<CustomFeedBack> {
   bool _showContainer = false;
   @override
   Widget build(BuildContext context) {
@@ -586,7 +646,7 @@ class _CustomFeedBackState extends State<CustomFeedBack> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -598,10 +658,10 @@ class _CustomFeedBackState extends State<CustomFeedBack> {
           ),
           _showContainer
               ? Container(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   child: Text(
                     'Feedback: ${widget.feedback}!',
-                    style: TextStyle(fontSize: 18, color: Colors.black),
+                    style: const TextStyle(fontSize: 18, color: Colors.black),
                   ),
                 )
               : Container(),

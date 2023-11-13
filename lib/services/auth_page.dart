@@ -7,7 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../dashboard.dart';
+import '../area/dashboard.dart';
 
 class AuthCheck extends StatefulWidget {
   @override
@@ -33,7 +33,7 @@ class _AuthCheckState extends State<AuthCheck> {
   @override
   Widget build(BuildContext context) {
     if(isLogin){
-      return Home();
+      return AreaDashboard();
     }else{
       return Login();
     }

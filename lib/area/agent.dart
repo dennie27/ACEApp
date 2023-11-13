@@ -1,8 +1,7 @@
 // main.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:field_app/area/customer_vist.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:field_app/area/customer_visit.dart';
 import 'package:field_app/services/user_detail.dart';
 import 'package:call_log/call_log.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -22,7 +21,6 @@ class AgentTask extends StatefulWidget {
 }
 
 class AgentTaskState extends State<AgentTask> {
-  String _searchText = '';
   bool visit = false;
   getPhoto(String client) async {
     String username = 'dennis+angaza@greenlightplanet.com';
@@ -32,7 +30,7 @@ class AgentTaskState extends State<AgentTask> {
     var headers = {
       "Accept": "application/json",
       "method": "GET",
-      "Authorization": '${basicAuth}',
+      "Authorization": basicAuth,
       "account_qid": "AC5156322",
     };
     var uri = Uri.parse('https://payg.angazadesign.com/data/clients/$client');
@@ -79,12 +77,12 @@ class AgentTaskState extends State<AgentTask> {
     });
   }
 
-  Future<void> _getFilterdata(String Task) async {
+  Future<void> _getFilterdata(String task) async {
     QuerySnapshot querySnapshot = await firestore
         .collection("new_calling")
         .where("Area", isEqualTo: await UserDetail().getUserArea())
         .where('Status', isNotEqualTo: 'Complete')
-        .where('Task', isEqualTo: Task)
+        .where('Task', isEqualTo: task)
         .get();
     setState(() {
       _data = querySnapshot.docs;
@@ -137,14 +135,14 @@ class AgentTaskState extends State<AgentTask> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Your call has been record successfull'),
         ),
       );
       return Navigator.of(context, rootNavigator: true).pop();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
               'the call was not recorded as its not meet required duretion'),
         ),
@@ -170,7 +168,6 @@ class AgentTaskState extends State<AgentTask> {
     final _formKey = GlobalKey<FormState>();
     phone = phone.toSet().toList();
     String txt = feedbackController.text;
-    String datetxt = dateInputController.text.toString();
 
     String _docid = docid;
     showDialog(
@@ -179,7 +176,7 @@ class AgentTaskState extends State<AgentTask> {
           return SingleChildScrollView(
             child: AlertDialog(
                 title: Text('Customer Feedback'),
-                content: Container(
+                content: SizedBox(
                     height: 500,
                     child: Form(
                       key: _formKey,
@@ -196,7 +193,7 @@ class AgentTaskState extends State<AgentTask> {
                               await FlutterPhoneDirectCaller.callNumber(
                                   phoneselected!);
                             }),
-                        SizedBox(
+                        const SizedBox(
                           height: 10,
                         ),
                         DropdownButtonFormField(
@@ -210,7 +207,7 @@ class AgentTaskState extends State<AgentTask> {
                             decoration: InputDecoration(
                               filled: true,
                               labelText: "feedback",
-                              border: OutlineInputBorder(),
+                              border: const OutlineInputBorder(),
                               hintStyle: TextStyle(color: Colors.grey[800]),
                               hintText: "Name",
                             ),
@@ -235,17 +232,17 @@ class AgentTaskState extends State<AgentTask> {
                           },
                           maxLines: 4,
                           validator: (value) {
-                            if (txt == null || txt.isEmpty) {
+                            if (txt.isEmpty) {
                               return 'Please fill additional feedback';
                             }
                             return null;
                           },
                           controller: feedbackController,
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             labelText: 'Additional Feedback',
                           ),
                         ),
-                        SizedBox(
+                        const SizedBox(
                           height: 10,
                         ),
                         TextFormField(
@@ -269,14 +266,14 @@ class AgentTaskState extends State<AgentTask> {
                                 initialDate: DateTime.now(),
                                 firstDate: DateTime.now(),
                                 lastDate:
-                                DateTime.now().add(Duration(days: 5)));
+                                DateTime.now().add( const Duration(days: 5)));
 
                             if (pickedDate != null) {
                               dateInputController.text = pickedDate.toString();
                             }
                           },
                         ),
-                        SizedBox(
+                        const SizedBox(
                           height: 20,
                         ),
                         Row(
@@ -286,7 +283,7 @@ class AgentTaskState extends State<AgentTask> {
                                 onPressed: () {
                                   Navigator.of(context).pop();
                                 },
-                                child: Text('Cancel'),
+                                child:const Text('Cancel'),
                               ),
                               ElevatedButton(
                                 onPressed: () {
@@ -297,14 +294,14 @@ class AgentTaskState extends State<AgentTask> {
                                         angaza);
                                   } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
+                                      const SnackBar(
                                         content:
                                         Text("Please fill all the detail"),
                                       ),
                                     );
                                   }
                                 },
-                                child: Text('Submit'),
+                                child: const Text('Submit'),
                               ),
                             ])
                       ]),
@@ -348,27 +345,26 @@ class AgentTaskState extends State<AgentTask> {
                 switch (value) {
                   case 'All':
                     _getDocuments();
-                    print(value);
+
                     break;
                   case 'Call':
-                    print(value);
+
                     _getFilterdata('Call');
                     break;
                   case 'Disabled':
-                    print(value);
+
                     _getFilterdata('Disable');
                     break;
                   case 'Visit':
-                    print(value);
                     _getFilterdata('Visit');
                     break;
                 }
               },
               itemBuilder: (context) => [
-                const PopupMenuItem(child: Text("All"), value: "All"),
-                const PopupMenuItem(child: Text("Call"), value: "Call"),
-                const PopupMenuItem(child: Text("Disabled"), value: "Disabled"),
-                const PopupMenuItem(child: Text("Visit"), value: "Visit"),
+                const PopupMenuItem( value: "All", child: Text("All"), ),
+                const PopupMenuItem( value: "Call",child: Text("Call"),),
+                const PopupMenuItem(value: "Disabled",child: Text("Disabled"), ),
+                const PopupMenuItem( value: "Visit",child: Text("Visit"),),
               ],
               icon: const Icon(Icons.filter_list_alt, color: Colors.yellow),
             ),
@@ -389,16 +385,12 @@ class AgentTaskState extends State<AgentTask> {
           height: 10,
         ),
         Expanded(
-          child: _data.length > 0
+          child: _data.isEmpty
               ? ListView.separated(
             itemCount: _data.length,
             itemBuilder: (context, index) {
               DocumentSnapshot data = _data[index];
-              String phoneList = '${data["Customer Phone Number"]},' +
-                  '${data["Phone Number 1"].toString()},' +
-                  '${data["Phone Number 2"].toString()},' +
-                  '${data["Phone Number 3"].toString()},' +
-                  '${data["Phone Number 4"].toString()},';
+              String phoneList = '${data["Customer Phone Number"]},${data["Phone Number 1"].toString()},${data["Phone Number 2"].toString()},${data["Phone Number 3"].toString()},${data["Phone Number 4"].toString()},';
               if (data["Task"] == 'Visit') {
                 visit = true;
               } else {
@@ -408,7 +400,7 @@ class AgentTaskState extends State<AgentTask> {
                   !_data[index]['Customer Name']
                       .toLowerCase()
                       .contains(_searchQuery.toLowerCase())) {
-                return SizedBox();
+                return const SizedBox();
               }
               return InkWell(
                 onTap: () {
@@ -431,10 +423,10 @@ class AgentTaskState extends State<AgentTask> {
                       children: [
                         Row(
                           children: [
-                            Column(
+                            const Column(
                               crossAxisAlignment:
                               CrossAxisAlignment.start,
-                              children: const [
+                              children:  [
                                 Text(
                                   "Name:",
                                   style: TextStyle(
@@ -462,18 +454,18 @@ class AgentTaskState extends State<AgentTask> {
                               CrossAxisAlignment.start,
                               children: [
                                 Text("${data['Customer Name']}",
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontSize: 13,
                                       color: Colors.black,
                                     )),
                                 Text(
-                                    "${data['Account Number'].toString()}",
-                                    style: TextStyle(
+                                    data['Account Number'].toString(),
+                                    style: const TextStyle(
                                       fontSize: 13,
                                       color: Colors.black,
                                     )),
                                 Text("${data['Product Name']}",
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontSize: 13,
                                       color: Colors.black,
                                     )),
@@ -486,21 +478,21 @@ class AgentTaskState extends State<AgentTask> {
                           children: [
                             visit
                                 ? IconButton(
-                                padding: new EdgeInsets.all(0.0),
+                                padding:const  EdgeInsets.all(0.0),
                                 onPressed: () {},
                                 icon: Transform.rotate(
                                     angle: 90,
-                                    child: Icon(Icons.phone_disabled,
+                                    child: const Icon(Icons.phone_disabled,
                                         size: 20.0)))
                                 : IconButton(
-                                padding: new EdgeInsets.all(0.0),
+                                padding: const  EdgeInsets.all(0.0),
                                 onPressed: () {
                                   _callNumber(phoneList, data.id,
                                       data["Angaza ID"]);
                                 },
-                                icon: Icon(Icons.phone, size: 20.0)),
+                                icon: const Icon(Icons.phone, size: 20.0)),
                             IconButton(
-                                padding: new EdgeInsets.all(0.0),
+                                padding: const  EdgeInsets.all(0.0),
                                 onPressed: () {
                                   Navigator.push(
                                       context,
@@ -512,7 +504,7 @@ class AgentTaskState extends State<AgentTask> {
                                             ),
                                       ));
                                 },
-                                icon: Icon(Icons.location_on_outlined,
+                                icon: const Icon(Icons.location_on_outlined,
                                     size: 20.0))
                           ],
                         )
@@ -521,7 +513,7 @@ class AgentTaskState extends State<AgentTask> {
                   ),
                 ),
               );
-              ;
+
             },
             separatorBuilder: (BuildContext context, int index) =>
             const Divider(),

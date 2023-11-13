@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'dart:io';
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:field_app/area/location.dart';
-import 'package:field_app/pending_task.dart';
-import 'package:field_app/task.dart';
+import 'package:field_app/area/pending_calls.dart';
 import 'package:field_app/widget/drop_down.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_maps_widget/google_maps_widget.dart';
 import 'package:http/http.dart' as http;
 import 'package:camera/camera.dart';
@@ -15,11 +17,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:intl/intl.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/db.dart';
 import '../utils/themes/theme.dart';
-
-
-
 class CustomerVisit  extends StatefulWidget {
 
   final id;
@@ -29,6 +29,25 @@ class CustomerVisit  extends StatefulWidget {
   CustomerVisitState createState() => CustomerVisitState();
 }
 class CustomerVisitState extends State<CustomerVisit> {
+  bool isLoading = false;
+  List? _data = [];
+  List? data = [0];
+
+  Future<void> ACETask(account) async {
+
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final data = prefs.getString('filteredTasks') ?? '[]';
+    var area = prefs.getString('area');
+    var dataList = jsonDecode(data);
+    var filteredTasks =  dataList.where((task) => task['Area'] ==area && task['Angaza ID']
+        == account
+    ).toList();
+    setState(() {
+      _data = filteredTasks;
+      isLoading = true;
+    });
+  }
   String? phoneselected;
   String? feedbackselected;
   TextEditingController feedbackController = TextEditingController();
@@ -39,6 +58,7 @@ class CustomerVisitState extends State<CustomerVisit> {
   var number1update;
   var name1update;
   var calltypeupdate;
+  var name;
   var timedateupdate;
   var duration1update;
   var accidupdate;
@@ -56,11 +76,10 @@ class CustomerVisitState extends State<CustomerVisit> {
       "Authorization": '${basicAuth}',
       "account_qid" : "AC5156322",
     };
-    final httpPackageUrl = Uri.https('payg.angazadesign.com', '/data/clients',{"account_qid" : "AC5156322"},
-    );
+
     var uri = Uri.parse('https://payg.angazadesign.com/data/accounts/$angazaid');
     var response = await http.get(uri, headers: headers);
-    var data = response.body;
+
 
     var dd = json.decode(response.body);
     var id = dd['client_qids'][0];
@@ -80,163 +99,6 @@ class CustomerVisitState extends State<CustomerVisit> {
         .firstWhere((attr) => attr['name'] == 'Client Photo')['value'];
     return photo;
   }
-  /*_callNumber(String phoneNumber, String docid,String angaza) async {
-    List<String> phone = phoneNumber.split(',');
-    phone  = phone.toSet().toList();
-
-
-    String _docid = docid;
-    showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return SingleChildScrollView(
-            child: AlertDialog(
-                title: Text('Customer Feedback'),
-                content: Container(
-                    height: 400,
-                    child: Column(children: <Widget>[
-                      AppDropDown(
-                          label: 'Phone Number',
-                          hint: 'Select Phone Number',
-                          items: phone,
-                          onChanged: (String value) async {
-                            setState((){
-                              phoneselected = value;
-                            });
-                            await FlutterPhoneDirectCaller.callNumber(phoneselected!);
-                          }),
-                      SizedBox(height: 10,),
-                      DropdownButtonFormField(
-                          isExpanded: true,
-                          decoration: InputDecoration(
-                            filled: true,
-                            labelText: "feedback",
-                            border: OutlineInputBorder(),
-                            hintStyle: TextStyle(color: Colors.grey[800]),
-                            hintText: "Name",
-                          ),
-                          items: feedback.map((String items) {
-                            return DropdownMenuItem(
-                              value: items,
-                              child: Text(items,overflow: TextOverflow.clip, maxLines: 2,),
-                            );
-                          }).toList(),
-                          onChanged: (val) {
-                            setState(() {
-                              feedbackselected = val!;
-                            });
-                          }),
-                      TextField(
-                        maxLines: 4,
-                        controller: feedbackController,
-                        decoration: InputDecoration(
-                          labelText: 'Additional Feedback',
-                        ),
-                      ),
-                      SizedBox(height: 10,),
-                      TextFormField(
-                        decoration: const InputDecoration(
-                          hintText: 'Date',
-                          border: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.blue, width: 1)),
-                          focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.blue, width: 1)),
-                          enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.blue, width: 1)),
-                        ),
-                        controller: dateInputController,
-                        readOnly: true,
-                        onTap: () async {
-                          DateTime? pickedDate = await showDatePicker(
-                              context: context,
-                              initialDate: DateTime.now(),
-                              firstDate: DateTime.now(),
-                              lastDate: DateTime.now().add(Duration(days: 5)));
-
-                          if (pickedDate != null) {
-                            dateInputController.text =pickedDate.toString();
-                          }
-                        },
-                      ),
-                      SizedBox(
-                        height: 20,
-                      ),
-                      Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: <Widget>[
-                            ElevatedButton(
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                              child: Text('Cancel'),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                callLogs(_docid,feedbackController.text,angaza);
-                              },
-                              child: Text('Submit'),
-                            ),
-                          ])
-                    ]))),
-          );
-        });
-  }
-  void callLogs(String docid,String feedback,String angaza) async {
-    String _docid = docid;
-
-    Iterable<CallLogEntry> entries = await CallLog.get();
-    fnumberupdate = entries.elementAt(0).formattedNumber;
-    cmnumberupdate = entries.elementAt(0).cachedMatchedNumber;
-    number1update = entries.elementAt(0).number;
-    name1update = entries.elementAt(0).name;
-    calltypeupdate = entries.elementAt(0).callType;
-    timedateupdate = entries.elementAt(0).timestamp;
-    duration1update = entries.elementAt(0).duration;
-    accidupdate = entries.elementAt(0).phoneAccountId;
-    simnameupdate = entries.elementAt(0).simDisplayName;
-
-
-    if (duration1update >= 30) {
-      CollectionReference newCalling = firestore.collection("new_calling");
-      await newCalling.doc(_docid).update({
-        'Duration': duration1update,
-        'ACE Name': currentUser?.displayName,
-        "User UID": currentUser?.uid,
-        "date": DateFormat('yyyy-MM-dd kk:mm').format(DateTime.now()),
-        "Task Type": "Call",
-        "Status": "Complete",
-        "Promise date": dateInputController.text,
-      });
-      CollectionReference feedBack = firestore.collection("FeedBack");
-      await feedBack.add({
-        "Angaza ID":angaza,
-        "Duration": duration1update,
-        "User UID": currentUser?.uid,
-        "date": DateFormat('yyyy-MM-dd kk:mm').format(DateTime.now()),
-        "Task Type": "Call",
-        "Status": "Complete",
-        "Promise date": dateInputController.text,
-        "Feedback":feedback
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Your call has been record successfull'),
-        ),
-      );
-      return Navigator.of(context, rootNavigator: true).pop();
-
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-
-        SnackBar(
-          content: Text('the call was not recorded as its not meet required duretion'),
-        ),
-      );
-      return Navigator.of(context, rootNavigator: true).pop();
-
-    }
-  }*/
   getPhoto(String client) async {
     String username = 'dennis+angaza@greenlightplanet.com';
     String password = 'sunking';
@@ -281,9 +143,11 @@ class CustomerVisitState extends State<CustomerVisit> {
 
   @override
   void initState() {
-    checkGps();
-    loadCamera();
     super.initState();
+
+    //loadCamera();
+    ACETask(widget.angaza);
+
   }
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
@@ -299,7 +163,7 @@ class CustomerVisitState extends State<CustomerVisit> {
   }
   final formKey = GlobalKey<FormState>();
   updateCustomer() async {
-    if(imageFile == null || reasonselected == null){
+    if(/*imageFile == null ||*/ reasonselected == null){
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select reason and capture image'),
@@ -309,48 +173,34 @@ class CustomerVisitState extends State<CustomerVisit> {
     }else{
       final fileName = DateTime.now();
       final destination = 'files/$fileName';
+      final awsFile = AWSFile.fromPath(imageFile!.path);
+
+
       try {
+        final resultUpload = await Amplify.Storage.uploadFile(
+          key: destination,
+          localFile: awsFile,
+
+        ).result;
+        print(resultUpload.uploadedItem.key);
         GeoPoint newLocation = GeoPoint(lat, long);
-        final CollectionReference collectionReference = firestore.collection("new_calling");
-        var currentUser = FirebaseAuth.instance.currentUser;
-        final uploadfile = storage.ref(destination);
-        await collectionReference.doc(widget.id).update(
-            { 'Reason':reasonselected,
-              'Status':'Complete',
-              "Promise date": dateInputController.text,
-              'User UID': currentUser?.uid,
-              'date': DateFormat('yyyy-MM-dd kk:mm').format(DateTime.now()),
-              'Task Type': 'Visit',
-              'image': destination,
-              'Task':'Visit',
-              'Location' : newLocation
-            }
 
-
-        );
-        CollectionReference feedBack = firestore.collection("FeedBack");
-        await feedBack.add({
-          "Angaza ID":widget.angaza,
-          'Reason':reasonselected,
-              'Status':'Complete',
-          'Promise date': dateInputController.text,
-          'User UID': currentUser?.uid,
-              'date': DateFormat('yyyy-MM-dd kk:mm').format(DateTime.now()),
-              'Task Type': 'Visit',
-              'image': destination,
-              'Task':'Visit',
-              'Location' : newLocation
-        });
-        await uploadfile.putFile(imageFile!);
+        var connection = await Database.connect();
+        var date =DateFormat('yyyy-MM-dd').format(DateTime.now());
+        var col = '"angaza_id", "user", "date", "task", "status", "promise_date", "feedback","reason","location"';
+        var value = "'${widget.angaza}','dennis Juma','$date','Visit','Complete','$date','deniis feedback','$reasonselected','{newLocation}'";
+        var result = await connection.query("INSERT INTO feedback ($col) VALUES ($value)");
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Task Updated successfully'),
           ),
         );
+        Navigator.of(context).pop();
       }catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('An error occur when submit'),
+           SnackBar(
+
+            content: Text('An error occur when submit ${e.toString()} '),
           ),
         );
       }
@@ -465,23 +315,7 @@ class CustomerVisitState extends State<CustomerVisit> {
     return Scaffold(
       appBar: AppBar(),
       body: SingleChildScrollView(
-        child: StreamBuilder(
-            stream: firestore
-                .collection("new_calling").doc(widget.id).snapshots(),
-            builder:(context, snapshot){
-
-              if(snapshot.hasData ){
-
-                DocumentSnapshot data = snapshot.data!;
-                String phoneList =
-                    '${data["Customer Phone Number"]},'+
-                        '${data["Phone Number 1"].toString()},'+
-                        '${data["Phone Number 2"].toString()},'+
-                        '${data["Phone Number 3"].toString()},'+
-                        '${data["Phone Number 4"].toString()},'
-                ;
-
-                return Column(
+        child: isLoading?Column(
                   children: [
 
                     Center(
@@ -499,14 +333,14 @@ class CustomerVisitState extends State<CustomerVisit> {
                                   color: Colors.grey.withOpacity(0.3),
                                   child:  Center(child: Image.network(photo)),
                                 );
-                              } else if (snapshot.hasError) {
-                                return Text('Error: ${snapshot.error}');
+                              } else if (photourl.hasError) {
+                                return Text('Error: ${photourl.error}');
                               } else {
-                                return CircularProgressIndicator();
+                                return const CircularProgressIndicator();
                               }
                             })),
-                    Text('Name:  ${data['Customer Name']}',style:const TextStyle(fontSize: 15)),
-                    Text('Account : ${data['Account Number']}',style:const TextStyle(fontSize: 15)),
+                    Text('Name:  ${_data![0]['Customer Name']}',style:const TextStyle(fontSize: 15)),
+                    Text('Account : ${_data![0]['Account Number']}',style:const TextStyle(fontSize: 15)),
 
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -518,8 +352,8 @@ class CustomerVisitState extends State<CustomerVisit> {
                               data["Angaza ID"]
                           );*/
 
-                        },child: Text(data['Customer Phone Number'],style:const TextStyle(fontSize: 20,color: Colors.black),),),
-                        TextButton(onPressed: (){},child: Text(data['Area'].toString(),style:const TextStyle(fontSize: 20,color: Colors.black))),
+                        },child: Text(_data![0]['Customer Phone Number'],style:const TextStyle(fontSize: 20,color: Colors.black),),),
+                        TextButton(onPressed: (){},child: Text(_data![0]['Area'].toString(),style:const TextStyle(fontSize: 20,color: Colors.black))),
 
                       ],
 
@@ -550,23 +384,23 @@ class CustomerVisitState extends State<CustomerVisit> {
                                   setState(() {
                                     reasonselected = value;
                                   });}),
-              SizedBox(height: 10,),
+              const SizedBox(height: 10,),
              if(reasonselected != null)
                TextFormField(
                  controller: feedbackController,
                    maxLines: 5,
                    decoration: InputDecoration(
               labelText:reasonselected,
-                     focusedBorder: OutlineInputBorder(
+                     focusedBorder: const OutlineInputBorder(
                        borderSide:
                        BorderSide(color: AppColor.mycolor, width: 1.0),
                      ),
-                     enabledBorder: OutlineInputBorder(
+                     enabledBorder: const OutlineInputBorder(
                        borderSide:
                        BorderSide(color: Colors.black12, width: 1.0),
                      ),
                    )),
-              SizedBox(height: 10,),
+              const SizedBox(height: 10,),
 
               SizedBox(
                 width: double.infinity,
@@ -602,14 +436,14 @@ class CustomerVisitState extends State<CustomerVisit> {
               context: context,
               initialDate: DateTime.now(),
               firstDate: DateTime.now(),
-              lastDate: DateTime.now().add(Duration(days: 5)));
+              lastDate: DateTime.now().add(const Duration(days: 5)));
 
               if (pickedDate != null) {
               dateInputController.text = DateFormat('yyyy-MM-dd').format(pickedDate).toString();
               }
               },
               ),
-                            SizedBox(
+                            const SizedBox(
                               height: 10,
                             ),
                             Padding(
@@ -619,7 +453,7 @@ class CustomerVisitState extends State<CustomerVisit> {
                                 height: 50,
                                 child: ElevatedButton(onPressed: (){
                                   updateCustomer();
-                                  PendingTask();
+                                  const PendingCalls();
                                 }, child:const Text('Submit')),
                               ),
                             )
@@ -634,12 +468,17 @@ class CustomerVisitState extends State<CustomerVisit> {
                         height: 50,
                         child: ElevatedButton.icon(
               onPressed: () {
-              Navigator.push(
-              context,
-              MaterialPageRoute(
-              builder: (context) =>
-              CustomerLocation(id: widget.id, customerLocation: data['Location'],name: data['Customer Name'],),
-              ));
+                if(_data![0]['Location Latitudelongitude'] == null || _data![0]['Location Latitudelongitude'] == ''){
+
+                }else{
+
+                  Navigator.push(context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            CustomerLocation(id: widget.id, customerLocation: _data![0]['Location Latitudelongitude'],name: _data![0]['Customer Name'],),
+                      ));
+                }
+
               },
                           label: const Text('Get direction'),
                           icon: const Icon(Icons
@@ -648,31 +487,12 @@ class CustomerVisitState extends State<CustomerVisit> {
                       ),
                     ),
                                      ],
-                );
-              }
-              else if(snapshot.hasError){
-                return Column(
-                  children: const [
-                  CircularProgressIndicator(),
-                    Text("Loading data...")
-                  ],
-                );
-              }
-              else{
-                return Center(
-                  child: Column(
-                    children: const [
-                      CircularProgressIndicator(),
-                      Text("Loading data...")
-                    ],
-                  ),
-                );
-              }
+                ):const Center(child: CircularProgressIndicator(
 
-            },
-        ),
-      ),
+    ))
+      )
     );
-  }
+
+   }
 
 }

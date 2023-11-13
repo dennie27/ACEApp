@@ -1,10 +1,8 @@
-// main.dart
+
 import 'dart:convert';
-import 'package:field_app/utils/themes/theme.dart';
+
 import 'package:http/http.dart' as http;
-import 'package:field_app/area/customer_vist.dart';
-import 'package:field_app/services/calls_detail.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:field_app/area/customer_visit.dart';
 import 'package:field_app/services/user_detail.dart';
 import 'package:call_log/call_log.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -12,7 +10,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/db.dart';
 import '../widget/drop_down.dart';
 import 'customer_profile.dart';
 
@@ -24,7 +24,7 @@ class CompleteCalls extends StatefulWidget {
 }
 
 class CompleteCallsState extends State<CompleteCalls> {
-  String _searchText = '';
+
   bool visit = false;
   getPhoto(String client) async {
     String username = 'dennis+angaza@greenlightplanet.com';
@@ -34,7 +34,7 @@ class CompleteCallsState extends State<CompleteCalls> {
     var headers = {
       "Accept": "application/json",
       "method": "GET",
-      "Authorization": '${basicAuth}',
+      "Authorization": basicAuth,
       "account_qid": "AC5156322",
     };
     var uri = Uri.parse('https://payg.angazadesign.com/data/clients/$client');
@@ -70,29 +70,43 @@ class CompleteCallsState extends State<CompleteCalls> {
   }
 
   String _searchQuery = '';
-  List<DocumentSnapshot> _data = [];
-  Future<void> _getDocuments() async {
-    QuerySnapshot querySnapshot = await firestore
-        .collection("new_calling")
-        .where("Area", isEqualTo: await UserDetail().getUserArea())
-        .where('Status', isEqualTo: 'Complete')
-        .get();
+  List? _data = [];
+
+  Future<void> ACETask() async {
+    var connection = await Database.connect();
+    var results = await connection.query("SELECT angaza_id FROM feedback");
+    var uniqueAngazaIds = <String>{};
+    for (var row in results) {
+      uniqueAngazaIds.add(row[0] as String);
+    }
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final data = prefs.getString('filteredTasks') ?? '[]';
+    var area = prefs.getString('area');
+    var dataList = jsonDecode(data);
+    var filteredTasks =  dataList.where((task) => task['Area'] == area
+    ).toList();
+    var postList =  uniqueAngazaIds.toSet();
+    filteredTasks.removeWhere((element) => !postList.contains(element["Angaza ID"]));
+
     setState(() {
-      _data = querySnapshot.docs;
+      _data = filteredTasks;
+    });
+  }
+  Future<void> _getDocuments() async {
+    var connection = await Database.connect();
+    var results = await connection.query( "SELECT angaza_id FROM feedback");
+    var uniqueAngazaIds = <String>{};
+    for (var row in results) {
+      uniqueAngazaIds.add(row[0] as String);
+    }
+
+
+    setState(() {
+      _data = results;
     });
   }
 
   Future<void> _getFilterdata(String Task) async {
-    QuerySnapshot querySnapshot = await firestore
-        .collection("new_calling")
-        .where("Area", isEqualTo: await UserDetail().getUserArea())
-        .where('Status', isEqualTo: 'Complete')
-        .where('Task', isEqualTo: Task)
-        .get();
-    setState(() {
-      _data = querySnapshot.docs;
-      visit = false;
-    });
   }
 
   int daysBetween(DateTime from, DateTime to) {
@@ -238,7 +252,7 @@ class CompleteCallsState extends State<CompleteCalls> {
                           },
                           maxLines: 4,
                           validator: (value) {
-                            if (txt == null || txt.isEmpty) {
+                            if ( txt.isEmpty) {
                               return 'Please fill additional feedback';
                             }
                             return null;
@@ -324,7 +338,7 @@ class CompleteCallsState extends State<CompleteCalls> {
   initState() {
     // at the beginning, all users are shown
     userArea();
-    _getDocuments();
+    ACETask();
     super.initState();
   }
 
@@ -388,23 +402,24 @@ class CompleteCallsState extends State<CompleteCalls> {
           height: 10,
         ),
         Expanded(
-          child: _data.length > 0
+          child: _data!.length > 0
               ? ListView.separated(
-                  itemCount: _data.length,
+                  itemCount: _data!.length,
                   itemBuilder: (context, index) {
-                    DocumentSnapshot data = _data[index];
+                    var data = _data![index];
                     String phoneList = '${data["Customer Phone Number"]},' +
                         '${data["Phone Number 1"].toString()},' +
                         '${data["Phone Number 2"].toString()},' +
                         '${data["Phone Number 3"].toString()},' +
                         '${data["Phone Number 4"].toString()},';
-                    if (data["Task"] == 'Visit') {
+                    print(phoneList);
+                    if (data[0] == 'Visit') {
                       visit = true;
                     } else {
                       visit = false;
                     }
                     if (_searchQuery.isNotEmpty &&
-                        !_data[index]['Customer Name']
+                        !_data![index]['Customer Name']
                             .toLowerCase()
                             .contains(_searchQuery.toLowerCase())) {
 
@@ -415,12 +430,12 @@ class CompleteCallsState extends State<CompleteCalls> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => CProfile(
-                                id: data.id,
-                                angaza: data['Angaza ID'],
+                                id: data["Angaza ID"],
+                                angaza:data["Angaza ID"],
                               ),
                             ));
                       },
-                      key: ValueKey(_data[index]),
+                      key: ValueKey(_data![index]),
                       child: Card(
                         elevation: 8,
                         child: Padding(
@@ -471,7 +486,7 @@ class CompleteCallsState extends State<CompleteCalls> {
                                             fontSize: 13,
                                             color: Colors.black,
                                           )),
-                                      Text("${data['Product Name']}",
+                                      Text("${data['Product Name'].toString()}",
                                           style: TextStyle(
                                             fontSize: 13,
                                             color: Colors.black,
@@ -494,8 +509,8 @@ class CompleteCallsState extends State<CompleteCalls> {
                                       : IconButton(
                                           padding: new EdgeInsets.all(0.0),
                                           onPressed: () {
-                                            _callNumber(phoneList, data.id,
-                                                data["Angaza ID"]);
+                                            _callNumber(phoneList, data[0],
+                                                data[0]);
                                           },
                                           icon: Icon(Icons.phone, size: 20.0)),
                                   IconButton(
@@ -506,7 +521,7 @@ class CompleteCallsState extends State<CompleteCalls> {
                                             MaterialPageRoute(
                                               builder: (context) =>
                                                   CustomerVisit(
-                                                id: data.id,
+                                                id: data["Angaza ID"],
                                                 angaza: data["Angaza ID"],
                                               ),
                                             ));
@@ -520,7 +535,7 @@ class CompleteCallsState extends State<CompleteCalls> {
                         ),
                       ),
                     );
-                    ;
+
                   },
                   separatorBuilder: (BuildContext context, int index) =>
                       const Divider(),

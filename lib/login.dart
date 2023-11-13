@@ -590,6 +590,72 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
                     });
                   },
                 ),
+                TextButton(
+                    onPressed: (){
+                  showDialog(
+                    context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      title: Text("Reset password"),
+                      actions: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop(); // Close the dialog
+                              },
+                              child: Text("Cancel"),
+                            ),
+                            TextButton(
+                              onPressed: () async{
+    if (_email != null && _email.toLowerCase().endsWith("@sunking.com")){
+      final response = await http.post(
+        Uri.parse('https://credit-assessment.herokuapp.com/authentication/request-reset-email'), // Replace with your API endpoint URL.
+        body: {
+          'email': _email,
+        },
+      );
+      print(response.statusCode);
+
+                                }else{
+                                  print("de");
+                                }
+                                // Handle the password reset logic here
+                                // You can access the email address using emailController.text
+                                // Send a password reset link or perform the necessary action
+                                // Close the dialog
+                              },
+                              child: Text("Reset"),
+                            ),
+                          ],
+                        )
+
+                      ],
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text("Please enter your email address to reset your password."),
+                        TextFormField(
+                            onChanged: (value) {
+                              _email = value;
+                            },
+                          decoration: InputDecoration(labelText: "Email Address"),
+
+                        ),
+                      ],
+                    ),
+                    );
+                  }
+                  );
+                },
+
+                    child: Text("forgot password?",
+                      style:
+                      TextStyle(color: Colors.white,
+                          fontSize: 20.0
+                      ),
+                    ))
               ],
             ),
           ),

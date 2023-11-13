@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/themes/theme.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import 'account_location.dart';
+
 class AreaDashboard extends StatefulWidget {
   const AreaDashboard({Key? key}) : super(key: key);
   @override
@@ -99,18 +101,25 @@ class AreaDashboardState extends State<AreaDashboard> {
   @override
   Widget build(BuildContext context) {
 
-    return isLogin?const Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text("Hi! Welcome"),
-        Text("You are new user please contact the admin")
-      ],
-    ):SingleChildScrollView(
+    return SingleChildScrollView(
       child: DefaultTabController(
         length: 2,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
+            ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  minimumSize: Size.fromHeight(
+                      40), // fromHeight use double.infinity as width and 40 is the height
+                ),
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => LocationMap(),
+                      ));
+                },
+                child: Text("Map")),
             const KpiTittle(
               title_color: AppColor.mycolor,
               label: 'Calls Summary',

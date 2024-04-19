@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/themes/theme.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'account_location.dart';
 
@@ -119,27 +120,27 @@ class AreaDashboardState extends State<AreaDashboard> {
                         builder: (context) => LocationMap(),
                       ));
                 },
-                child: Text("Map")),
-            const KpiTittle(
+                child: Text(AppLocalizations.of(context)!.map)),
+             KpiTittle(
               title_color: AppColor.mycolor,
-              label: 'Calls Summary',
+              label: AppLocalizations.of(context)!.call_summary,
               txtColor: Colors.black87,
             ),
             Row(
               children: [
                 RowData(
-                  value: 0,
-                  label: 'Call Attempt',
+                  value: 3,
+                  label: AppLocalizations.of(context)!.call_attempt,
                   future: USerCallDetail().countComplete('Call'),
                 ),
                 RowData(
-                  value: 0,
-                  label: 'Call Made',
+                  value: 3,
+                  label: AppLocalizations.of(context)!.call_made,
                   future: USerCallDetail().countCallMade('Call'),
                 ),
                 RowData(
-                  label: 'Calls Pending',
-                  value: 0,
+                  label: AppLocalizations.of(context)!.call_pending,
+                  value: 3,
                   future: USerCallDetail().countPendingCall('Call'),
                 ),
 
@@ -149,42 +150,42 @@ class AreaDashboardState extends State<AreaDashboard> {
             Row(
               children: [
                 RowData(
-                  value: 0,
-                  label: 'Complete Rate',
+                  value: 3,
+                  label: AppLocalizations.of(context)!.complete_rate,
                   future: USerCallDetail().completeCallRate('Call'),
                 ),
                 RowData(
-                  value: 32,
-                  label: 'Success Calls',
+                  value: 3,
+                  label:AppLocalizations.of(context)!.success_call,
                   future: USerCallDetail().countSucceful('Call'),
                 ),
                 RowData(
-                  value: 35,
-                  label: 'Total Collected',
+                  value: 3,
+                  label: AppLocalizations.of(context)!.total_collected,
                   future: USerCallDetail().amount('Call'),
                 ),
               ],
             ),
-            const KpiTittle(
+             KpiTittle(
               title_color: AppColor.mycolor,
-              label: 'Visit Summary',
+              label: AppLocalizations.of(context)!.visit_summary,
               txtColor: Colors.black87,
             ),
             Row(
               children: [
                 RowData(
-                  value: 20,
-                  label: 'Visit Attempt',
+                  value: 3,
+                  label: AppLocalizations.of(context)!.visit_attempty,
                   future: USerCallDetail().countComplete('Visit'),
                 ),
                 RowData(
-                  value: 20,
-                  label: 'Visit Made',
+                  value: 3,
+                  label: AppLocalizations.of(context)!.visit_made,
                   future: USerCallDetail().countVisitMade('Visit'),
                 ),
                 RowData(
-                  value: 40,
-                  label: 'Visit Pending',
+                  value: 3,
+                  label: AppLocalizations.of(context)!.visit_pending,
                   future: USerCallDetail().countPendingVisit('Visit'),
                 ),
               ],
@@ -193,44 +194,44 @@ class AreaDashboardState extends State<AreaDashboard> {
               children: [
 
                 RowData(
-                  value: 35,
-                  label: 'Complete Rate',
+                  value: 3,
+                  label: AppLocalizations.of(context)!.complete_rate,
                   future: USerCallDetail().completeVistRate('Visit'),
                 ),
 
                 RowData(
-                  value: 20,
-                  label: 'Success Visit',
+                  value: 3,
+                  label: AppLocalizations.of(context)!.success_visit,
                   future: USerCallDetail().countSucceful('Visit'),
                 ),
                 RowData(
-                  value: 35,
-                  label: 'Total Collected',
+                  value: 3,
+                  label: AppLocalizations.of(context)!.total_collected,
                   future: USerCallDetail().amount('Visit'),
                 ),
               ],
             ),
-            const KpiTittle(
+             KpiTittle(
               title_color: AppColor.mycolor,
-              label: 'Disable Task  Summary',
+              label: AppLocalizations.of(context)!.disabled_task_summary,
               txtColor: Colors.black87,
             ),
 
             Row(
               children: [
                 RowData(
-                  value: 0,
-                  label: 'Task Attempt',
+                  value: 3,
+                  label: AppLocalizations.of(context)!.task_attempt,
                   future: USerCallDetail().countComplete('Disable'),
                 ),
                 RowData(
-                  value: 0,
-                  label: 'Task Made',
+                  value: 3,
+                  label: AppLocalizations.of(context)!.task_made,
                   future: USerCallDetail().countCallMade('Disable'),
                 ),
                 RowData(
-                  label: 'Task Pending',
-                  value: 0,
+                  label: AppLocalizations.of(context)!.task_pending,
+                  value: 3,
                   future: USerCallDetail().countPendingCall('Disable'),
                 ),
 
@@ -240,42 +241,42 @@ class AreaDashboardState extends State<AreaDashboard> {
             Row(
               children: [
                 RowData(
-                  value: 0,
-                  label: 'Complete Rate',
+                  value: 3,
+                  label: AppLocalizations.of(context)!.complete_rate,
                   future: USerCallDetail().completeCallRate('Disable'),
                 ),
                 RowData(
-                  value: 32,
-                  label: 'Success Calls',
+                  value: 3,
+                  label: AppLocalizations.of(context)!.success_call,
                   future: USerCallDetail().countSucceful('Disable'),
                 ),
                 RowData(
-                  value: 35,
-                  label: 'Total Collected',
+                  value: 3,
+                  label: AppLocalizations.of(context)!.total_collected,
                   future: USerCallDetail().amount('Disable'),
                 ),
               ],
             ),
-            const KpiTittle(
+             KpiTittle(
               title_color: AppColor.mycolor,
-              label: 'Restricted Agents',
+              label: AppLocalizations.of(context)!.agent_restricted,
               txtColor: Colors.black87,
             ),
             Row(
               children: [
                 RowData(
-                  value: 0,
-                  label: 'Agent Restricted',
+                  value: 3,
+                  label: AppLocalizations.of(context)!.agent_restricted,
                   future: USerCallDetail().countRestricted(),
                 ),
                 RowData(
-                  value: 0,
-                  label: 'Agent Moved out',
+                  value: 3,
+                  label: AppLocalizations.of(context)!.agent_out,
                   future: USerCallDetail().countMoveOut(),
                 ),
                 RowData(
-                  label: 'Agent Move In',
-                  value: 0,
+                  label: AppLocalizations.of(context)!.agent_in,
+                  value: 3,
                   future: USerCallDetail().countMoveIn(),
                 ),
 
@@ -327,6 +328,8 @@ class RowData extends StatelessWidget {
       : super(key: key);
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double cardWidth = (screenWidth - 28) / this.value;
     return Expanded(
       child: FutureBuilder<dynamic>(
           future:future,
@@ -338,7 +341,7 @@ class RowData extends StatelessWidget {
                   elevation: 3,
                   child: SizedBox(
                     height: 50,
-                    width: 100,
+                    width: cardWidth,
                     child: Column(
                       children: [
                         Text(snapshot.data.toString(),
@@ -358,7 +361,7 @@ class RowData extends StatelessWidget {
                   elevation: 3,
                   child: SizedBox(
                     height: 40,
-                    width: 60,
+                    width: cardWidth,
                     child: Column(
                       children: [
                         const Text('0',
@@ -372,12 +375,12 @@ class RowData extends StatelessWidget {
                 ),
               );
             } else {
-              return const Column(children: [
+              return  Column(children: [
                 CircularProgressIndicator(),
                 SizedBox(
                   height: 10,
                 ),
-                Text('run...'),
+                Text(AppLocalizations.of(context)!.loading),
               ]);
             }
           }),

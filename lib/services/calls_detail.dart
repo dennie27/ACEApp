@@ -64,22 +64,47 @@ class USerCallDetail{
   }
   Future<int> countPendingCall(String value) async {
     var connection = await Database.connect();
-    var results = await connection.query("SELECT angaza_id FROM feedback");
+    var today = DateTime.now().toString().split(" ")[0];
+    var results = await connection.query("SELECT angaza_id FROM feedbackwhere promise_date >= @today",
+        substitutionValues: {'today': today});
     var uniqueAngazaIds = <String>{};
     for (var row in results) {
       uniqueAngazaIds.add(row[0] as String);
     }
     SharedPreferences prefs = await SharedPreferences.getInstance();
+
     final data = prefs.getString('filteredTasks') ?? '[]';
     var area  =  prefs.getString('area');
+    var country =  prefs.getString('country');
+
+    var region = prefs.getString('region');
+    var areaspace =area!.replaceAll(" ", "");
+    List<String> targetArea = areaspace!.split(",");
+
     var dataList = jsonDecode(data);
-    var filteredTasks =  dataList.where((task) => task['Area'] == area
-    ).toList();
-    var postList =  uniqueAngazaIds.toSet();
-    filteredTasks.removeWhere((element) => postList.contains(element["Angaza ID"]));
-    // Extract the count from the query result.
-    final count = filteredTasks.length;
-    return count;
+    if(country == "India" || country == "Myanmar (Burma)"){
+
+      var filteredTasks =  dataList.where((task) {
+        return targetArea.contains(task['Area']);
+      }
+      ).toList();
+
+      var postList =  uniqueAngazaIds.toSet();
+      filteredTasks.removeWhere((element) => postList.contains(element["Angaza ID"]));
+      // Extract the count from the query result.
+      final count = filteredTasks.length;
+      return count;
+    }else{
+      var filteredTasks =  dataList.where((task) => task['Area'] == area
+      ).toList();
+
+      var postList =  uniqueAngazaIds.toSet();
+      filteredTasks.removeWhere((element) => postList.contains(element["Angaza ID"]));
+      // Extract the count from the query result.
+      final count = filteredTasks.length;
+      return count;
+    }
+
   }
   Future<int> countRestricted() async {
     final connection =   await Database.connect();
@@ -177,7 +202,9 @@ class USerCallDetail{
   }
   Future<int> countPendingVisit(String value) async {
     var connection = await Database.connect();
-    var results = await connection.query("SELECT angaza_id FROM feedback");
+    var today = DateTime.now().toString().split(" ")[0];
+    var results = await connection.query("SELECT angaza_id FROM feedback where promise_date >= @today",
+        substitutionValues: {'today': today});
     var uniqueAngazaIds = <String>{};
     for (var row in results) {
       uniqueAngazaIds.add(row[0] as String);
@@ -186,16 +213,32 @@ class USerCallDetail{
     final data = prefs.getString('filteredTasks') ?? '[]';
     var area = prefs.getString('area')!;
     var dataList = jsonDecode(data);
-    var filteredTasks =  dataList.where((task) => task['Area'] == area
-    ).toList();
-    var postList =  uniqueAngazaIds.toSet();
-    filteredTasks.removeWhere((element) => postList.contains(element["Angaza ID"]));
+    var country =  prefs.getString('country');
+    var areaspace =area!.replaceAll(" ", "");
+    List<String> targetArea = areaspace!.split(",");
+    if(country == "India" || country == "Myanmar (Burma)"){
+      var filteredTasks =  dataList.where((task) {
+        return targetArea.contains(task['Area']);
+      }
+      ).toList();
+      var postList =  uniqueAngazaIds.toSet();
+      filteredTasks.removeWhere((element) => postList.contains(element["Angaza ID"]));
+      final count = filteredTasks.length;
+      return count;
+
+    }else{
+      var filteredTasks =  dataList.where((task) => task['Area'] == area
+      ).toList();
+      var postList =  uniqueAngazaIds.toSet();
+      filteredTasks.removeWhere((element) => postList.contains(element["Angaza ID"]));
+      final count = filteredTasks.length;
+      return count;
+    }
 
     // Get docs from collection reference
 
     // Extract the count from the query result.
-    final count = filteredTasks.length;
-    return count;
+
   }
   Future<int> countVisitMade(String value) async {
     final connection =   await Database.connect();

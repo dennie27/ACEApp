@@ -1,16 +1,24 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:country_flags/country_flags.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:country_picker/country_picker.dart';
+
+import 'l10n/language.dart';
 
 
 class Profile  extends StatefulWidget {
   const Profile({Key? key}) : super(key: key);
+
   @override
   ProfileState createState() => ProfileState();
 }
 class ProfileState extends State<Profile> {
+
   @override
   void initState() {
     super.initState();
@@ -23,6 +31,9 @@ class ProfileState extends State<Profile> {
   String zone ='';
   String role = '';
   String email = "";
+  void changeAppLanguage(Locale locale) {
+    Localizations.override(context: context, locale: locale);
+  }
   void getUserAttributes() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -33,15 +44,13 @@ class ProfileState extends State<Profile> {
     country =  prefs.getString("country")!;
     role = prefs.getString("role")!;
     zone =  prefs.getString("zone")!;
-
-    if (kDebugMode) {
-    }
     // Process the user attributes
 
 
   }
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(),
       body: Column(
@@ -71,7 +80,50 @@ class ProfileState extends State<Profile> {
             ],
 
           ),
+    Consumer<LanguageChangeController>(
+      builder: (context, provider, child){
+        return PopupMenuButton(
+        onSelected: (value) {
+        switch (value) {
+        case 'en':
+        provider.changelanguage(Locale('en'));
+        break;
+        case 'hi':
+        provider.changelanguage(Locale('hi'));
+        break;
+        case 'my':
+        provider.changelanguage(Locale('my'));
+        break;
+        case 'pt':
 
+        provider.changelanguage(Locale('pt'));
+        break;
+        }
+        },
+        itemBuilder: (BuildContext context)   =>[
+        PopupMenuItem(
+        value: "en",
+        child: CountryFlag.fromCountryCode('GB',height: 30,width: 30,),
+        ),
+        PopupMenuItem(
+        value: "hi",
+        child: CountryFlag.fromCountryCode('IN',height: 30,width: 30,),
+        ),
+        PopupMenuItem(
+        value: "my",
+        child: CountryFlag.fromCountryCode('MM',height: 30,width: 30,),
+        ),
+        PopupMenuItem(
+        value: "pt",
+        child: CountryFlag.fromCountryCode('PT',height: 30,width: 30,),
+        ),
+        ],
+        icon: const Icon(Icons.language, color: Colors.black),
+
+        );
+      },
+
+    ),
 
 
           Card(
@@ -79,14 +131,14 @@ class ProfileState extends State<Profile> {
             color: Colors.black,
             child: ListTile(
               title: Center(
-                  child: Text("User Details",
+                  child: Text(AppLocalizations.of(context)!.user_details,
                       style: TextStyle(fontSize: 15, color: Colors.yellow))),
               dense: true,
             ),
           ),
           ElevatedButton(onPressed: (){
 
-          }, child: Text("Update detail"))
+          }, child: Text(AppLocalizations.of(context)!.update_detail))
 
 
         ],

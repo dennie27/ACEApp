@@ -56,11 +56,13 @@ class MultiSelectField extends StatefulWidget {
   final String label;
   final List<String?> options;
   void Function(dynamic)? onSave;
+  void Function(dynamic)? onChange;
 
   MultiSelectField({
     required this.label,
     required this.options,
     this.onSave,
+    this.onChange
   });
 
   @override

@@ -3,6 +3,8 @@ import 'package:field_app/area/pending_calls.dart';
 import 'package:flutter/material.dart';
 import 'complete_calls.dart';
 
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 class Customer extends StatefulWidget {
   const Customer({Key? key}) : super(key: key);
   @override
@@ -23,11 +25,11 @@ class CustomerState extends State<Customer> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          const TabBar(tabs: [
+           TabBar(tabs: [
             Tab(
-              text: "Pending ",
+              text: AppLocalizations.of(context)!.pending,
             ),
-            Tab(text: "Completed"),
+            Tab(text: AppLocalizations.of(context)!.complete),
             //Tab(text: "Agent"),
           ]),
           Expanded(

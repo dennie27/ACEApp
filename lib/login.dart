@@ -8,9 +8,11 @@ import 'package:field_app/services/db.dart';
 import 'package:field_app/widget/drop_down.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:flutter_localization/flutter_localization.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class Login extends StatefulWidget {
+/*class Login extends StatefulWidget {
   @override
   _LoginState createState() => _LoginState();
 }
@@ -143,7 +145,7 @@ class _UserLoginState extends State<UserLogin> {
       )
     );
   }
-}
+}*/
 class LoginSignupPage extends StatefulWidget {
   @override
   _LoginSignupPageState createState() => _LoginSignupPageState();
@@ -164,6 +166,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
   String lastname ='';
   bool isLoading = true;
   List? data = [];
+  List<String> _selectedValues = [];
 
   List<String> countrydata = [];
   List<String> zonedata = [];
@@ -202,7 +205,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
   }
   Future<void> CoutryData(key) async {
     List<String> uniqueCountry = [];
-    print("data Object: $key");
+
 
 
     try {
@@ -212,9 +215,6 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
 
       final response = await http.get(urlResult.url);
       final jsonData = jsonDecode(response.body);
-      print('File_team: $jsonData');
-
-      print(jsonData.length);
 
       for (var item in jsonData) {
         uniqueCountry.add(item['Country']);
@@ -317,46 +317,93 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
         }
       }else {
         try{
-          final response = await http.post(
-            Uri.parse('https://sun-kingfieldapp.herokuapp.com/api/auth/signup'),
-            body: {
-              'username' : _email,
-              'fname' :firstname ,
-              'lname' : lastname,
-              'email' : _email,
-              'country' :country,
-              'zone' : zone,
-              'region' :region ,
-              'area' : area,
-              'role' : role,
-              'pass1' : _password,
-              'pass2' : _confirmPassword,
+          if(country=='India'){
+            final response = await http.post(
+              Uri.parse('https://sun-kingfieldapp.herokuapp.com/api/auth/signup'),
+              body: {
+                'username' : _email,
+                'fname' :firstname ,
+                'lname' : lastname,
+                'email' : _email,
+                'country' :country,
+                'zone' : zone,
+                'region' :region ,
+                'area' : _selectedValues[0],
+                'area2' : _selectedValues[1],
+                'role' : role,
+                'pass1' : _password,
+                'pass2' : _confirmPassword,
 
-            },
-          );
-          if(response.statusCode == 201){
-            final Map<String, dynamic> responseData = jsonDecode(response.body);
-            String successMessage = responseData['message'];
-            final snackBar = SnackBar(
-
-              content: Text(successMessage),
-              duration: Duration(seconds: 3),
+              },
             );
-            ScaffoldMessenger.of(context).showSnackBar(snackBar);
-            setState(() {
-              _authMode = AuthMode.Login;
-            });
+            if(response.statusCode == 201){
+              final Map<String, dynamic> responseData = jsonDecode(response.body);
+              String successMessage = responseData['message'];
+              final snackBar = SnackBar(
+
+                content: Text(successMessage),
+                duration: Duration(seconds: 3),
+              );
+              ScaffoldMessenger.of(context).showSnackBar(snackBar);
+              setState(() {
+                _authMode = AuthMode.Login;
+              });
+            }else{
+              print(response.body);
+              final Map<String, dynamic> responseData = jsonDecode(response.body);
+              String successMessage = responseData['error'];
+              final snackBar = SnackBar(
+                content: Text(successMessage),
+                duration: Duration(seconds: 3),
+              );
+              ScaffoldMessenger.of(context).showSnackBar(snackBar);
+              print(successMessage);
+            }
           }else{
-            print(response.body);
-            final Map<String, dynamic> responseData = jsonDecode(response.body);
-            String successMessage = responseData['error'];
-            final snackBar = SnackBar(
-              content: Text(successMessage),
-              duration: Duration(seconds: 3),
+            final response = await http.post(
+              Uri.parse('https://sun-kingfieldapp.herokuapp.com/api/auth/signup'),
+              body: {
+                'username' : _email,
+                'fname' :firstname ,
+                'lname' : lastname,
+                'email' : _email,
+                'country' :country,
+                'zone' : zone,
+                'region' :region ,
+                'area' : area,
+                'area2':area,
+                'role' : role,
+                'pass1' : _password,
+                'pass2' : _confirmPassword,
+
+              },
             );
-            ScaffoldMessenger.of(context).showSnackBar(snackBar);
-            print(successMessage);
+            if(response.statusCode == 201){
+              final Map<String, dynamic> responseData = jsonDecode(response.body);
+              String successMessage = responseData['message'];
+              final snackBar = SnackBar(
+
+                content: Text(successMessage),
+                duration: Duration(seconds: 3),
+              );
+              ScaffoldMessenger.of(context).showSnackBar(snackBar);
+              setState(() {
+                _authMode = AuthMode.Login;
+              });
+            }else{
+              print(response.body);
+              final Map<String, dynamic> responseData = jsonDecode(response.body);
+              String successMessage = responseData['error'];
+              final snackBar = SnackBar(
+                content: Text(successMessage),
+                duration: Duration(seconds: 3),
+              );
+              ScaffoldMessenger.of(context).showSnackBar(snackBar);
+              print(successMessage);
+            }
           }
+
+
         }catch (e) {
           print('Error executing query: $e');
         } finally {
@@ -370,9 +417,9 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
 
     // TODO: implement initState
     super.initState();
-    listItems("country");
+    print(_authMode);
 
-
+      listItems("country");
   }
   @override
   Widget build(BuildContext context) {
@@ -393,13 +440,13 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
                 if(_authMode == AuthMode.Signup)
                   Column(children: [
                     TextFormField(
-                      decoration: InputDecoration(labelText: 'First Name',
+                      decoration: InputDecoration(labelText: AppLocalizations.of(context)!.fname,
                         fillColor: Colors.white,
                         filled: true,),
                       style: TextStyle(color: Colors.black),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your First Name';
+                          return AppLocalizations.of(context)!.enter_fname;
                         }
                         return null;
                       },
@@ -410,14 +457,14 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
                     SizedBox(height: 10,),
                     TextFormField(
                       style: TextStyle(color: Colors.black),
-                      decoration: InputDecoration(labelText: 'Last Name',
+                      decoration: InputDecoration(labelText: AppLocalizations.of(context)!.lname,
                         fillColor: Colors.white,
 
                         filled: true,
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your Last Name';
+                          return AppLocalizations.of(context)!.enter_lname;
                         }
                         return null;
                       },
@@ -428,12 +475,12 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
                     SizedBox(height: 10,),
                     AppDropDown(
                         disable: false,
-                        label: "Country",
-                        hint: "Country",
+                        label: AppLocalizations.of(context)!.country,
+                        hint: AppLocalizations.of(context)!.country,
                         items: countrydata,
                         validator: (value){
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your Country';
+                            return AppLocalizations.of(context)!.enter_country;
                           }
                           return null;
                         },
@@ -447,12 +494,12 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
                     SizedBox(height: 10,),
                     AppDropDown(
                         disable: false,
-                        label: "Zone",
-                        hint: "Zone",
+                        label: AppLocalizations.of(context)!.zone,
+                        hint: AppLocalizations.of(context)!.zone,
                         items: zonedata,
                         validator: (value){
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your Zone';
+                            return AppLocalizations.of(context)!.enter_zone;
                           }
                           return null;
                         },
@@ -465,12 +512,12 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
 
                     AppDropDown(
                         disable: false,
-                        label: "Region",
-                        hint: "Region",
+                        label: AppLocalizations.of(context)!.region,
+                        hint: AppLocalizations.of(context)!.region,
                         items: regiondata,
                         validator: (value){
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your Zone';
+                            return AppLocalizations.of(context)!.enter_region;
                           }
                           return null;
                         },
@@ -479,34 +526,94 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
                           Area();
                         }),
                     SizedBox(height: 10,),
-                    AppDropDown(
+
+                    if(country=='India' || country == 'Myanmar (Burma)')
+                      FormField(builder: (
+                          FormFieldState<dynamic> field) {
+                        return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+
+                            children: <Widget>[
+                              Text("Area"),
+                              InputDecorator(
+                                decoration: InputDecoration(
+                                  hintText: 'Select options',
+                                  border: OutlineInputBorder(),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: null,
+                                    isDense: true,
+                                    isExpanded: true,
+                                    onChanged: (String? value) {
+                                      setState(() {
+                                        if (_selectedValues.contains(value!)) {
+                                          _selectedValues.remove(value);
+                                        } else {
+                                          _selectedValues.add(value);
+                                          area = _selectedValues.toString();
+                                          print(area);
+                                        }
+                                        //state.didChange(_selectedValues);
+                                      });
+                                    },
+
+                                    items:areadata
+                                        .map<DropdownMenuItem<String>>((String? value) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value!),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Wrap(
+                                children: _selectedValues
+                                    .map<Widget>((String value) => Chip(
+                                  label: Text(value),
+                                  onDeleted: () {
+                                    setState(() {
+                                      _selectedValues.remove(value);
+                                      // state.didChange(_selectedValues);
+                                    });
+                                  },
+                                ))
+                                    .toList(),
+                              ),
+                            ]
+                        );
+                      },),
+                    if(country!='India')
+                      AppDropDown(
                         disable: false,
-                        label: "Area",
-                        hint: "Area",
+                        label: AppLocalizations.of(context)!.area,
+                        hint: AppLocalizations.of(context)!.area,
                         items: areadata,
-                        validator: (value){
+                       /* validator: (value){
                           if (value == null || value.isEmpty) {
                             return 'Please enter your Area';
                           }
                           return null;
-                        },
+                        },*/
                         onChanged: (value){
                           area = value;
                         }),
                     SizedBox(height: 10,),
                     AppDropDown(
                         disable: false,
-                        label: "Role",
-                        hint: "Role",
+                        label: AppLocalizations.of(context)!.role,
+                        hint: AppLocalizations.of(context)!.role,
                         items: const ["Area Collection Executive"],
                         validator: (value){
                           if (value == null || value.isEmpty) {
-                            return 'Please enter your Role';
+                            return AppLocalizations.of(context)!.role;
                           }
                           return null;
                         },
                         onChanged: (value){
-                          role = value;
+                          role = "ACE";
                         }),
 
                   ],),
@@ -522,8 +629,8 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
                     var domain  = value!.split('@');
                     print(domain);
                     print(domain[1]);
-                    if (value == null || value.isEmpty || domain![1].toLowerCase() !='sunking.com') {
-                      return 'Please enter avalid email';
+                    if (value == null || value.isEmpty || domain[1].toLowerCase() !='sunking.com') {
+                      return AppLocalizations.of(context)!.enter_email;
                     }
                     return null;
                   },
@@ -534,14 +641,14 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
                 SizedBox(height: 10,),
                 TextFormField(
                   style: TextStyle(color: Colors.black),
-                  decoration: InputDecoration(labelText: 'Password',
+                  decoration: InputDecoration(labelText: AppLocalizations.of(context)!.password,
                     fillColor: Colors.white,
                     filled: true,
                   ),
                   obscureText: true,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
+                      return AppLocalizations.of(context)!.enter_password;
                     }
                     return null;
                   },
@@ -575,11 +682,13 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
                   ),
                 SizedBox(height: 20.0),
                 ElevatedButton(
-                  child: Text(_authMode == AuthMode.Login ? 'Login' : 'Sign Up'),
+                  child: Text(_authMode == AuthMode.Login ?
+                  AppLocalizations.of(context)!.login :
+                  'Sign Up'),
                   onPressed: _submitForm,
                 ),
                 TextButton(
-                  child: Text(_authMode == AuthMode.Login ? 'Create Account' : 'Back to Login',
+                  child: Text(_authMode == AuthMode.Login ? AppLocalizations.of(context)!.creat_account : AppLocalizations.of(context)!.back_login,
                     style:
                     TextStyle(color: Colors.white,
                       fontSize: 20.0
@@ -596,7 +705,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
                     context: context,
                   builder: (context) {
                     return AlertDialog(
-                      title: Text("Reset password"),
+                      title: Text(AppLocalizations.of(context)!.reset_password),
                       actions: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -605,7 +714,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
                               onPressed: () {
                                 Navigator.of(context).pop(); // Close the dialog
                               },
-                              child: Text("Cancel"),
+                              child: Text(AppLocalizations.of(context)!.cancel),
                             ),
                             TextButton(
                               onPressed: () async{
@@ -626,7 +735,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
                                 // Send a password reset link or perform the necessary action
                                 // Close the dialog
                               },
-                              child: Text("Reset"),
+                              child: Text(AppLocalizations.of(context)!.reset_password),
                             ),
                           ],
                         )
@@ -635,12 +744,12 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
                     content: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text("Please enter your email address to reset your password."),
+                        Text(AppLocalizations.of(context)!.enter_email_reset),
                         TextFormField(
                             onChanged: (value) {
                               _email = value;
                             },
-                          decoration: InputDecoration(labelText: "Email Address"),
+                          decoration: InputDecoration(labelText: AppLocalizations.of(context)!.email_address),
 
                         ),
                       ],
@@ -650,7 +759,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
                   );
                 },
 
-                    child: Text("forgot password?",
+                    child: Text(AppLocalizations.of(context)!.forgot_password,
                       style:
                       TextStyle(color: Colors.white,
                           fontSize: 20.0

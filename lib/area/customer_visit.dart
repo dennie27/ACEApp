@@ -188,7 +188,7 @@ class CustomerVisitState extends State<CustomerVisit> {
         var connection = await Database.connect();
         var date =DateFormat('yyyy-MM-dd').format(DateTime.now());
         var col = '"angaza_id", "user", "date", "task", "status", "promise_date", "feedback","reason","location"';
-        var value = "'${widget.angaza}','dennis Juma','$date','Visit','Complete','$date','deniis feedback','$reasonselected','{newLocation}'";
+        var value = "'${widget.angaza}','name','$date','Visit','Complete','$date','deniis feedback','$reasonselected','{newLocation}'";
         var result = await connection.query("INSERT INTO feedback ($col) VALUES ($value)");
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

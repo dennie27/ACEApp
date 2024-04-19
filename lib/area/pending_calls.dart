@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/db.dart';
@@ -61,7 +62,11 @@ class PendingCallsState extends State<PendingCalls> {
   String _searchQuery = '';
   Future<void> ACETask() async {
     var connection = await Database.connect();
-    var results = await connection.query("SELECT angaza_id FROM feedback");
+    var today = DateTime.now().toString().split(" ")[0];
+
+    var results = await connection.query("SELECT angaza_id FROM feedback where promise_date >= @today",
+        substitutionValues: {'today': today});
+
     var uniqueAngazaIds = <String>{};
     for (var row in results) {
       uniqueAngazaIds.add(row[0] as String);
@@ -70,16 +75,38 @@ class PendingCallsState extends State<PendingCalls> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final data = prefs.getString('filteredTasks') ?? '[]';
     var area = prefs.getString('area');
+    var areaspace =area!.replaceAll(" ", "");
+    List<String> targetArea = areaspace!.split(",");
     var dataList = jsonDecode(data);
-    var filteredTasks = dataList.where((task) => task['Area'] == area ).toList();
-    var postList = uniqueAngazaIds.toSet();
-    filteredTasks
-        .removeWhere((element) => postList.contains(element["Angaza ID"]));
+    if(country == "India" || country == "Myanmar (Burma)"){
 
-    setState(() {
-      _data = filteredTasks;
-      isLoading = false;
-    });
+      var filteredTasks =  dataList.where((task) {
+        return targetArea.contains(task['Area']);
+      }
+      ).toList();
+      print(filteredTasks);
+      var postList = uniqueAngazaIds.toSet();
+      print(postList);
+      filteredTasks.removeWhere((element) => postList.contains(element["Angaza ID"]));
+
+      setState(() {
+        _data = filteredTasks;
+        isLoading = false;
+      });
+    }else{
+      var filteredTasks = dataList.where((task) => task['Area'] == area ).toList();
+      print(filteredTasks);
+      var postList = uniqueAngazaIds.toSet();
+      print(postList);
+      filteredTasks
+          .removeWhere((element) => postList.contains(element["Angaza ID"]));
+
+      setState(() {
+        _data = filteredTasks;
+        isLoading = false;
+      });
+    }
+
   }
 
   int daysBetween(DateTime from, DateTime to) {
@@ -110,7 +137,7 @@ class PendingCallsState extends State<PendingCalls> {
       var value =
           "'$angaza','$duration1update','$name','$date','Call','Complete','$date','$feedback','$reason'";
       var result =
-          await connection.query("INSERT INTO feedback ($col) VALUES ($value)");
+      await connection.query("INSERT INTO feedback ($col) VALUES ($value)");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Your call has been record successfull'),
@@ -119,9 +146,9 @@ class PendingCallsState extends State<PendingCalls> {
       return Navigator.of(context, rootNavigator: true).pop();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+         SnackBar(
           content: Text(
-              'the call was not recorded as its not meet required duretion'),
+              AppLocalizations.of(context)!.not_record),
         ),
       );
       return Navigator.of(context, rootNavigator: true).pop();
@@ -150,7 +177,7 @@ class PendingCallsState extends State<PendingCalls> {
         builder: (BuildContext context) {
           return SingleChildScrollView(
             child: AlertDialog(
-                title: const Text('Customer Feedback'),
+                title:  Text(AppLocalizations.of(context)!.customer_feedback),
                 content: SizedBox(
                     height: 500,
                     child: Form(
@@ -158,8 +185,8 @@ class PendingCallsState extends State<PendingCalls> {
                       child: Column(children: <Widget>[
                         AppDropDown(
                             disable: false,
-                            label: 'Phone Number',
-                            hint: 'Select Phone Number',
+                            label: AppLocalizations.of(context)!.phonenumber,
+                            hint: AppLocalizations.of(context)!.select_phonenumber,
                             items: phone,
                             onChanged: (String value) async {
                               setState(() {
@@ -175,16 +202,16 @@ class PendingCallsState extends State<PendingCalls> {
                             isExpanded: true,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Please select a feedback option';
+                                return AppLocalizations.of(context)!.feedback_option;
                               }
                               return null;
                             },
                             decoration: InputDecoration(
                               filled: true,
-                              labelText: "feedback",
+                              labelText: AppLocalizations.of(context)!.feedback,
                               border: const OutlineInputBorder(),
                               hintStyle: TextStyle(color: Colors.grey[800]),
-                              hintText: "Name",
+                              hintText: AppLocalizations.of(context)!.name,
                             ),
                             items: feedback.map((String items) {
                               return DropdownMenuItem(
@@ -208,30 +235,30 @@ class PendingCallsState extends State<PendingCalls> {
                           maxLines: 4,
                           validator: (value) {
                             if (txt == null || txt.isEmpty) {
-                              return 'Please fill additional feedback';
+                              return AppLocalizations.of(context)!.fill_all;
                             }
                             return null;
                           },
                           controller: feedbackController,
-                          decoration: const InputDecoration(
-                            labelText: 'Additional Feedback',
+                          decoration:  InputDecoration(
+                            labelText: AppLocalizations.of(context)!.add_feedback,
                           ),
                         ),
                         const SizedBox(
                           height: 10,
                         ),
                         TextFormField(
-                          decoration: const InputDecoration(
-                            hintText: 'Date',
-                            border: OutlineInputBorder(
+                          decoration:  InputDecoration(
+                            hintText: AppLocalizations.of(context)!.date,
+                            border: const OutlineInputBorder(
                                 borderSide:
-                                    BorderSide(color: Colors.black, width: 1)),
-                            focusedBorder: OutlineInputBorder(
+                                BorderSide(color: Colors.black, width: 1)),
+                            focusedBorder: const OutlineInputBorder(
                                 borderSide:
-                                    BorderSide(color: Colors.black, width: 1)),
-                            enabledBorder: OutlineInputBorder(
+                                BorderSide(color: Colors.black, width: 1)),
+                            enabledBorder: const OutlineInputBorder(
                                 borderSide:
-                                    BorderSide(color: Colors.black, width: 1)),
+                                BorderSide(color: Colors.black, width: 1)),
                           ),
                           controller: dateInputController,
                           readOnly: true,
@@ -258,7 +285,7 @@ class PendingCallsState extends State<PendingCalls> {
                                 onPressed: () {
                                   Navigator.of(context).pop();
                                 },
-                                child: const Text('Cancel'),
+                                child:  Text(AppLocalizations.of(context)!.cancel),
                               ),
                               ElevatedButton(
                                 onPressed: () {
@@ -269,14 +296,14 @@ class PendingCallsState extends State<PendingCalls> {
                                         angaza, feedbackselected!);
                                   } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
+                                       SnackBar(
                                         content:
-                                            Text("Please fill all the detail"),
+                                        Text(AppLocalizations.of(context)!.fill_all),
                                       ),
                                     );
                                   }
                                 },
-                                child: const Text('Submit'),
+                                child:  Text(AppLocalizations.of(context)!.submit),
                               ),
                             ])
                       ]),
@@ -328,21 +355,21 @@ class PendingCallsState extends State<PendingCalls> {
                 }
               },
               itemBuilder: (context) => [
-                const PopupMenuItem(
+                 PopupMenuItem(
                   value: "All",
-                  child: Text("All"),
+                  child: Text(AppLocalizations.of(context)!.all),
                 ),
-                const PopupMenuItem(
+                 PopupMenuItem(
                   value: "Call",
-                  child: Text("Call"),
+                  child: Text(AppLocalizations.of(context)!.call),
                 ),
-                const PopupMenuItem(
+                 PopupMenuItem(
                   value: "Disabled",
-                  child: Text("Disabled"),
+                  child: Text(AppLocalizations.of(context)!.disabled),
                 ),
-                const PopupMenuItem(
+                 PopupMenuItem(
                   value: "Visit",
-                  child: Text("Visit"),
+                  child: Text(AppLocalizations.of(context)!.visit),
                 ),
               ],
               icon: const Icon(Icons.filter_list_alt, color: Colors.yellow),
@@ -354,8 +381,8 @@ class PendingCallsState extends State<PendingCalls> {
                     _searchQuery = value;
                   });
                 },
-                decoration: const InputDecoration(
-                    labelText: 'Search', suffixIcon: Icon(Icons.search)),
+                decoration:  InputDecoration(
+                    labelText: AppLocalizations.of(context)!.search, suffixIcon: Icon(Icons.search)),
               ),
             )
           ],
@@ -366,157 +393,167 @@ class PendingCallsState extends State<PendingCalls> {
         Expanded(
           child: _data!.isNotEmpty
               ? ListView.separated(
-                  itemCount: _data!.length,
-                  itemBuilder: (context, index) {
-                    var data = _data![index];
-                    String phoneList =
-                        '${data["Customer Phone Number"]},${data["Phone Number 1"].toString()},${data["Phone Number 2"].toString()},${data["Phone Number 3"].toString()},${data["Phone Number 4"].toString()},';
-                    if (data["Task"] == 'Visit') {
-                      visit = true;
-                    } else {
-                      visit = false;
-                    }
-                    if (_searchQuery.isNotEmpty &&
-                        !_data![index]['Customer Name']
-                            .toLowerCase()
-                            .contains(_searchQuery.toLowerCase())) {
-                      return const SizedBox();
-                    }
-                    return InkWell(
-                      onTap: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => CProfile(
-                                id: data['Angaza ID'],
-                                angaza: data['Angaza ID'],
-                              ),
-                            ));
-                      },
-                      key: ValueKey(_data![index]),
-                      child: Card(
-                        elevation: 8,
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  const Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Name:",
-                                        style: TextStyle(
-                                            fontSize: 13,
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold),
-                                        overflow: TextOverflow.clip,
-                                        maxLines: 2,
-                                      ),
-                                      Text("Account:",
-                                          style: TextStyle(
-                                              fontSize: 13,
-                                              color: Colors.black,
-                                              fontWeight: FontWeight.bold)),
-                                      Text("Product:",
-                                          style: TextStyle(
-                                              fontSize: 13,
-                                              color: Colors.black,
-                                              fontWeight: FontWeight.bold)),
-                                      // Text("${account}"),
-                                    ],
-                                  ),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text("${data['Customer Name']}",
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            color: Colors.black,
-                                          )),
-                                      Text(data['Account Number'].toString(),
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            color: Colors.black,
-                                          )),
-                                      Text("${data['Product Name']}",
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            color: Colors.black,
-                                          )),
-                                      // Text("${account}"),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  visit
-                                      ? IconButton(
-                                          padding: const EdgeInsets.all(0.0),
-                                          onPressed: () {},
-                                          icon: Transform.rotate(
-                                              angle: 90,
-                                              child: const Icon(
-                                                  Icons.phone_disabled,
-                                                  size: 20.0)))
-                                      : IconButton(
-                                          padding: const EdgeInsets.all(0.0),
-                                          onPressed: () {
-                                            _callNumber(
-                                                phoneList,
-                                                data["Angaza ID"],
-                                                data["Angaza ID"]);
-
-                                            /* _callNumber(phoneList, data["Angaza ID"],
-                                                data["Angaza ID"]);*/
-                                          },
-                                          icon: const Icon(Icons.phone,
-                                              size: 20.0)),
-                                  if (data['Location Latitudelongitude'] ==
-                                          null ||
-                                      data['Location Latitudelongitude'] == "")
-                                    IconButton(
-                                        padding: const EdgeInsets.all(0.0),
-                                        onPressed: () {},
-                                        icon: const Icon(Icons.location_off,
-                                            size: 20.0)),
-                                  if (data['Location Latitudelongitude'] != "")
-                                    IconButton(
-                                        padding: const EdgeInsets.all(0.0),
-                                        onPressed: () {
-                                          Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    CustomerVisit(
-                                                  id: data["Angaza ID"],
-                                                  angaza: data["Angaza ID"],
-                                                ),
-                                              ));
-                                        },
-                                        icon: const Icon(
-                                            Icons.location_on_outlined,
-                                            size: 20.0))
-                                ],
-                              )
-                            ],
-                          ),
+            itemCount: _data!.length,
+            itemBuilder: (context, index) {
+              var data = _data![index];
+              String phoneList =
+                  '${data["Customer Phone Number"]},${data["Phone Number 1"].toString()},${data["Phone Number 2"].toString()},${data["Phone Number 3"].toString()},${data["Phone Number 4"].toString()},';
+              if (data["Task"] == 'Visit') {
+                visit = true;
+              } else {
+                visit = false;
+              }
+              if (_searchQuery.isNotEmpty &&
+                  !_data![index]['Customer Name']
+                      .toLowerCase()
+                      .contains(_searchQuery.toLowerCase())) {
+                return const SizedBox();
+              }
+              return InkWell(
+                onTap: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CProfile(
+                          id: data['Angaza ID'],
+                          angaza: data['Angaza ID'],
                         ),
-                      ),
-                    );
-                  },
-                  separatorBuilder: (BuildContext context, int index) =>
-                      const Divider(),
-                )
-              : const Text(
-                  'No results found',
-                  style: TextStyle(fontSize: 15),
+                      ));
+                },
+                key: ValueKey(_data![index]),
+                child: Card(
+                  elevation: 8,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                             Column(
+                              crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  AppLocalizations.of(context)!.name,
+                                  style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold),
+                                  overflow: TextOverflow.clip,
+                                  maxLines: 2,
+                                ),
+                                Text(AppLocalizations.of(context)!.account,
+                                    style: const TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.bold)),
+                                Text(AppLocalizations.of(context)!.product,
+                                    style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.bold)),
+                                Text(AppLocalizations.of(context)!.area,
+                                    style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.bold)),
+                                // Text("${account}"),
+                              ],
+                            ),
+                            Column(
+                              crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                              children: [
+                                Text("${data['Customer Name']}",
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.black,
+                                    )),
+                                Text(data['Account Number'].toString(),
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.black,
+                                    )),
+                                Text("${data['Product Name']}",
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.black,
+                                    )),
+                                Text("${data['Area']}",
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.black,
+                                    )),
+                                // Text("${account}"),
+                              ],
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            visit
+                                ? IconButton(
+                                padding: const EdgeInsets.all(0.0),
+                                onPressed: () {},
+                                icon: Transform.rotate(
+                                    angle: 90,
+                                    child: const Icon(
+                                        Icons.phone_disabled,
+                                        size: 20.0)))
+                                : IconButton(
+                                padding: const EdgeInsets.all(0.0),
+                                onPressed: () {
+                                  _callNumber(
+                                      phoneList,
+                                      data["Angaza ID"],
+                                      data["Angaza ID"]);
+
+                                  /* _callNumber(phoneList, data["Angaza ID"],
+                                                data["Angaza ID"]);*/
+                                },
+                                icon: const Icon(Icons.phone,
+                                    size: 20.0)),
+                            if (data['Location Latitudelongitude'] ==
+                                null ||
+                                data['Location Latitudelongitude'] == "")
+                              IconButton(
+                                  padding: const EdgeInsets.all(0.0),
+                                  onPressed: () {},
+                                  icon: const Icon(Icons.location_off,
+                                      size: 20.0)),
+                            if (data['Location Latitudelongitude'] != "")
+                              IconButton(
+                                  padding: const EdgeInsets.all(0.0),
+                                  onPressed: () {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              CustomerVisit(
+                                                id: data["Angaza ID"],
+                                                angaza: data["Angaza ID"],
+                                              ),
+                                        ));
+                                  },
+                                  icon: const Icon(
+                                      Icons.location_on_outlined,
+                                      size: 20.0))
+                          ],
+                        )
+                      ],
+                    ),
+                  ),
                 ),
+              );
+            },
+            separatorBuilder: (BuildContext context, int index) =>
+            const Divider(),
+          )
+              :  Text(
+            AppLocalizations.of(context)!.no_results,
+            style: const TextStyle(fontSize: 15),
+          ),
         )
       ],
     );

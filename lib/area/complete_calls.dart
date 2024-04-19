@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../services/db.dart';
 import '../widget/drop_down.dart';
@@ -74,7 +75,7 @@ class CompleteCallsState extends State<CompleteCalls> {
 
   Future<void> ACETask() async {
     var connection = await Database.connect();
-    var results = await connection.query("SELECT angaza_id FROM feedback");
+    var results = await connection.query("SELECT * FROM feedback");
     var uniqueAngazaIds = <String>{};
     for (var row in results) {
       uniqueAngazaIds.add(row[0] as String);
@@ -155,7 +156,7 @@ class CompleteCallsState extends State<CompleteCalls> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Your call has been record successfull'),
+          content: Text(AppLocalizations.of(context)!.complete),
         ),
       );
       return Navigator.of(context, rootNavigator: true).pop();
@@ -163,7 +164,7 @@ class CompleteCallsState extends State<CompleteCalls> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              'the call was not recorded as its not meet required duretion'),
+              AppLocalizations.of(context)!.not_record),
         ),
       );
       return Navigator.of(context, rootNavigator: true).pop();
@@ -195,7 +196,7 @@ class CompleteCallsState extends State<CompleteCalls> {
         builder: (BuildContext context) {
           return SingleChildScrollView(
             child: AlertDialog(
-                title: Text('Customer Feedback'),
+                title: Text(AppLocalizations.of(context)!.customer_feedback),
                 content: Container(
                     height: 500,
                     child: Form(
@@ -203,8 +204,8 @@ class CompleteCallsState extends State<CompleteCalls> {
                       child: Column(children: <Widget>[
                         AppDropDown(
                             disable: false,
-                            label: 'Phone Number',
-                            hint: 'Select Phone Number',
+                            label: AppLocalizations.of(context)!.phonenumber,
+                            hint: AppLocalizations.of(context)!.select_phonenumber,
                             items: phone,
                             onChanged: (String value) async {
                               setState(() {
@@ -220,16 +221,16 @@ class CompleteCallsState extends State<CompleteCalls> {
                             isExpanded: true,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Please select a feedback option';
+                                return AppLocalizations.of(context)!.feedback_option;
                               }
                               return null;
                             },
                             decoration: InputDecoration(
                               filled: true,
-                              labelText: "feedback",
+                              labelText: AppLocalizations.of(context)!.feedback,
                               border: OutlineInputBorder(),
                               hintStyle: TextStyle(color: Colors.grey[800]),
-                              hintText: "Name",
+                              hintText: AppLocalizations.of(context)!.name,
                             ),
                             items: feedback.map((String items) {
                               return DropdownMenuItem(
@@ -253,28 +254,28 @@ class CompleteCallsState extends State<CompleteCalls> {
                           maxLines: 4,
                           validator: (value) {
                             if ( txt.isEmpty) {
-                              return 'Please fill additional feedback';
+                              return AppLocalizations.of(context)!.fill_feedback;
                             }
                             return null;
                           },
                           controller: feedbackController,
                           decoration: InputDecoration(
-                            labelText: 'Additional Feedback',
+                            labelText: AppLocalizations.of(context)!.add_feedback,
                           ),
                         ),
                         SizedBox(
                           height: 10,
                         ),
                         TextFormField(
-                          decoration: const InputDecoration(
-                            hintText: 'Date',
-                            border: OutlineInputBorder(
+                          decoration:  InputDecoration(
+                            hintText: AppLocalizations.of(context)!.date,
+                            border: const OutlineInputBorder(
                                 borderSide:
                                     BorderSide(color: Colors.blue, width: 1)),
-                            focusedBorder: OutlineInputBorder(
+                            focusedBorder: const OutlineInputBorder(
                                 borderSide:
                                     BorderSide(color: Colors.blue, width: 1)),
-                            enabledBorder: OutlineInputBorder(
+                            enabledBorder: const OutlineInputBorder(
                                 borderSide:
                                     BorderSide(color: Colors.blue, width: 1)),
                           ),
@@ -293,7 +294,7 @@ class CompleteCallsState extends State<CompleteCalls> {
                             }
                           },
                         ),
-                        SizedBox(
+                        const SizedBox(
                           height: 20,
                         ),
                         Row(
@@ -303,7 +304,7 @@ class CompleteCallsState extends State<CompleteCalls> {
                                 onPressed: () {
                                   Navigator.of(context).pop();
                                 },
-                                child: Text('Cancel'),
+                                child: Text(AppLocalizations.of(context)!.cancel),
                               ),
                               ElevatedButton(
                                 onPressed: () {
@@ -316,12 +317,12 @@ class CompleteCallsState extends State<CompleteCalls> {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content:
-                                            Text("Please fill all the detail"),
+                                            Text(AppLocalizations.of(context)!.fill_all),
                                       ),
                                     );
                                   }
                                 },
-                                child: Text('Submit'),
+                                child: Text(AppLocalizations.of(context)!.submit),
                               ),
                             ])
                       ]),
@@ -378,10 +379,10 @@ class CompleteCallsState extends State<CompleteCalls> {
                 }
               },
               itemBuilder: (context) => [
-                const PopupMenuItem(child: Text("All"), value: "All"),
-                const PopupMenuItem(child: Text("Call"), value: "Call"),
-                const PopupMenuItem(child: Text("Disabled"), value: "Disabled"),
-                const PopupMenuItem(child: Text("Visit"), value: "Visit"),
+                 PopupMenuItem(child: Text(AppLocalizations.of(context)!.all), value: "All"),
+                 PopupMenuItem(child: Text(AppLocalizations.of(context)!.call), value: "Call"),
+                 PopupMenuItem(child: Text(AppLocalizations.of(context)!.disabled), value: "Disabled"),
+                 PopupMenuItem(child: Text(AppLocalizations.of(context)!.visit), value: "Visit"),
               ],
               icon: const Icon(Icons.filter_list_alt, color: Colors.yellow),
             ),
@@ -392,8 +393,8 @@ class CompleteCallsState extends State<CompleteCalls> {
                     _searchQuery = value;
                   });
                 },
-                decoration: const InputDecoration(
-                    labelText: 'Search', suffixIcon: Icon(Icons.search)),
+                decoration:  InputDecoration(
+                    labelText: AppLocalizations.of(context)!.search, suffixIcon: const Icon(Icons.search)),
               ),
             )
           ],
@@ -448,22 +449,22 @@ class CompleteCallsState extends State<CompleteCalls> {
                                   Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
-                                    children: const [
+                                    children:  [
                                       Text(
-                                        "Name:",
-                                        style: TextStyle(
+                                        AppLocalizations.of(context)!.name,
+                                        style: const TextStyle(
                                             fontSize: 13,
                                             color: Colors.black,
                                             fontWeight: FontWeight.bold),
                                         overflow: TextOverflow.clip,
                                         maxLines: 2,
                                       ),
-                                      Text("Account:",
+                                      Text(AppLocalizations.of(context)!.account,
                                           style: TextStyle(
                                               fontSize: 13,
                                               color: Colors.black,
                                               fontWeight: FontWeight.bold)),
-                                      Text("Product:",
+                                      Text(AppLocalizations.of(context)!.product,
                                           style: TextStyle(
                                               fontSize: 13,
                                               color: Colors.black,
@@ -540,9 +541,9 @@ class CompleteCallsState extends State<CompleteCalls> {
                   separatorBuilder: (BuildContext context, int index) =>
                       const Divider(),
                 )
-              : const Text(
-                  'No results found',
-                  style: TextStyle(fontSize: 15),
+              :  Text(
+            AppLocalizations.of(context)!.no_results,
+                  style: const TextStyle(fontSize: 15),
                 ),
         )
       ],

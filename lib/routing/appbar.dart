@@ -1,12 +1,26 @@
 import 'package:field_app/profile.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:country_flags/country_flags.dart';
+import 'package:country_picker/country_picker.dart';
 
 import '../login.dart';
 import '../notification.dart';
 import '../services/auth_services.dart';
 
 class SKAppBar extends StatelessWidget implements PreferredSizeWidget {
+  void _showLanguagePickerDialog(BuildContext context) {
+    showDialog(
+      context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Select Language'),
+
+          );
+        }
+
+    );
+  }
   Future<void> clearSharedPreferences() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.clear();
@@ -23,11 +37,13 @@ class SKAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+
     return AppBar(
       toolbarHeight: height,
       elevation: 7,
       centerTitle: true,
       actions: [
+
         IconButton(onPressed: (){
           Navigator.push(
               context,

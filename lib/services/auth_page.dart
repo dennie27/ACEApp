@@ -35,7 +35,7 @@ class _AuthCheckState extends State<AuthCheck> {
     if(isLogin){
       return AreaDashboard();
     }else{
-      return Login();
+      return LoginSignupPage();
     }
 
 

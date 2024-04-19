@@ -5,31 +5,37 @@ import 'package:amplify_storage_s3/amplify_storage_s3.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:call_log/call_log.dart';
 import 'package:field_app/services/db.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:field_app/utils/themes/theme.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:field_app/widget/drop_down.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
 import 'amplifyconfiguration.dart';
+import 'l10n/language.dart';
 import 'routing/bottom_nav.dart';
 import 'package:http/http.dart' as http;
 import 'login.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-/*
-final _messageStreamController = BehaviorSubject<RemoteMessage>();
-Future<void> backgroundHandler(RemoteMessage message) async {
-  print("Handling a background message: ${message.messageId}");
 
-}
-*/
-
+Locale _currentLocale = Locale('hi');
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  SharedPreferences prefs = await SharedPreferences.getInstance();
   await Firebase.initializeApp();
   await _configureAmplify();
-  runApp(const MyApp());
+
+  final String language  =  prefs.getString('language') ??'';
+  final String country  =  prefs.getString('country')??'';
+
+  runApp( MyApp(
+    locale: language,
+    country: country,
+  ));
 }
 
 Future<void> _configureAmplify() async {
@@ -51,7 +57,9 @@ Future<void> _configureAmplify() async {
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  final String locale;
+  final String country;
+  const MyApp({super.key,required this.locale,required this.country});
   @override
   State<MyApp> createState() => _MyAppState();
 }
@@ -72,10 +80,9 @@ class _MyAppState extends State<MyApp> {
     });
 
   }
-
-  late FirebaseMessaging messaging;
   @override
   Future<StorageItem?> listItems(key) async {
+    print(key);
     try {
       StorageListOperation<StorageListRequest, StorageListResult<StorageItem>>
       operation = await Amplify.Storage.list(
@@ -100,6 +107,7 @@ class _MyAppState extends State<MyApp> {
         ACETask(latestFile.key);
         return resultList.first;
       } else {
+        print('No files found in the S3 bucket with key containing "$key".');
         return null;
       }
     } on StorageException catch (e) {
@@ -135,7 +143,6 @@ class _MyAppState extends State<MyApp> {
 
     setState(() {
       islogin = prefs.getBool('isLogin')!;
-      print(islogin);
     });
 
   }
@@ -193,16 +200,61 @@ class _MyAppState extends State<MyApp> {
     //checkCallLog();
     listItems("ace_data");
 
+
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
-      debugShowCheckedModeBanner: false,
-      home:isLogin?NavPage():LoginSignupPage(),
+
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => LanguageChangeController())
+      ],
+      child: Consumer<LanguageChangeController>(
+        builder: (context, provider, child){
+          if(widget.locale.isEmpty){
+            if(
+            widget.country == 'Mozambique'
+            ){
+              provider.changelanguage(Locale('pt'));
+            }else if(
+            widget.country == 'Myanmar (Burma)'
+            ){
+              provider.changelanguage(Locale('my'));
+            }else if(
+            widget.country == 'India'
+            ){
+              provider.changelanguage(Locale('hi'));
+            }else{
+              provider.changelanguage(Locale('en'));
+            }
+
+
+          }
+
+          return MaterialApp(
+            locale: widget.locale == ''? Locale('hi'): provider.appLocale== null ?Locale('hi'):provider.appLocale,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en'), // English
+              Locale('hi'),
+              Locale('my'),
+              Locale('pt'),// Spanish
+            ],
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: ThemeMode.light,
+            debugShowCheckedModeBanner: false,
+            home:isLogin?NavPage():LoginSignupPage(),
+          );
+        }
+
+      ),
     );
   }
 }
